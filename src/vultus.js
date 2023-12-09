@@ -1,17 +1,15 @@
 import { Field } from './utils/field.js';
 
 /* future algorithm improvements: 
-stemming or lemmatization
-synonyms
-handle special characters and punctuation
 caching frequently used operations such as stemming and Levenshtein distance
 filter by options
-spell checker
 search suggestions and autocomplete
 */
 
 class Vultus {
     constructor() {
+        this.cache = new Map();
+        this.levenshteinCache = new Map();
         this.docs = [];
         this.fields = [];
     }
@@ -25,6 +23,11 @@ class Vultus {
     }
 
     search(query, parameters) {
+        const cacheKey = this.#createCacheKey(query, parameters);
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
         if (parameters) {
             this.#setParameters(parameters);
         }
@@ -49,16 +52,21 @@ class Vultus {
             }
         }
 
+        this.cache.set(cacheKey, sortedDocs);
+
         return sortedDocs;
     }
 
+    #createCacheKey(query, parameters) {
+        return JSON.stringify({ query, parameters });
+    }
 
     #calculateScore(doc, queryWords) {
         let score = 0;
 
         for (const field of this.fields) {
             if (doc[field.name]) {
-                const fieldContent = doc[field.name].toLowerCase();
+                const fieldContent = this.#sanitizeText(doc[field.name]);
 
                 if (queryWords.length > 1) {
                     score += this.#calculatePhraseScore(field, fieldContent, queryWords);
@@ -73,7 +81,7 @@ class Vultus {
 
     #calculatePhraseScore(field, fieldContent, queryWords) {
         let score = 0;
-        const fullQuery = queryWords.join(' ');
+        const fullQuery = this.#sanitizeText(queryWords.join(' '));
         const someThreshold = 3;
 
         for (let i = 0; i <= fieldContent.length - fullQuery.length;) {
@@ -92,9 +100,10 @@ class Vultus {
 
     #calculateWordScore(field, fieldContent, queryWords) {
         let score = 0;
+        const sanitizedQueryWords = queryWords.map(word => this.#sanitizeText(word));
 
         const fieldContentWords = fieldContent.split(/\s+/);
-        for (const word of queryWords) {
+        for (const word of sanitizedQueryWords) {
             for (const fieldWord of fieldContentWords) {
                 const distance = this.#levenshteinDistance(word, fieldWord);
                 if (distance < 3) {
@@ -106,17 +115,23 @@ class Vultus {
         return score;
     }
 
-    #levenshteinDistance(a, b) {
-        const matrix = [];
+    #sanitizeText(text) {
+        return text.replace(/[^\w\s]/gi, '').toLowerCase();
+    }
 
+    #levenshteinDistance(a, b) {
+        const cacheKey = `${a}:${b}`;
+        if (this.levenshteinCache.has(cacheKey)) {
+            return this.levenshteinCache.get(cacheKey);
+        }
+
+        const matrix = [];
         for (let i = 0; i <= b.length; i++) {
             matrix[i] = [i];
         }
-
         for (let j = 0; j <= a.length; j++) {
             matrix[0][j] = j;
         }
-
         for (let i = 1; i <= b.length; i++) {
             for (let j = 1; j <= a.length; j++) {
                 if (b.charAt(i - 1) === a.charAt(j - 1)) {
@@ -127,7 +142,9 @@ class Vultus {
             }
         }
 
-        return matrix[b.length][a.length];
+        const result = matrix[b.length][a.length];
+        this.levenshteinCache.set(cacheKey, result);
+        return result;
     }
 
 
