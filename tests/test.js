@@ -85,6 +85,7 @@ function init() {
 searchBar.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         console.clear();
+        console.time("all");
         const searchQuery = searchBar.value;
         const searchResults = vultus.search(searchQuery, {
             fields: {
@@ -93,6 +94,7 @@ searchBar.addEventListener('keypress', (e) => {
                 keywords: { weight: 1 }
             }
         });
+        console.timeEnd("all");
         searchResultsOutput.textContent = 'Search Results:\n' + JSON.stringify(searchResults, null, 2);
     }
 });

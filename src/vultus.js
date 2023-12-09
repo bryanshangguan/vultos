@@ -1,11 +1,5 @@
 import { Field } from './utils/field.js';
 
-/* future algorithm improvements: 
-caching frequently used operations such as stemming and Levenshtein distance
-filter by options
-search suggestions and autocomplete
-*/
-
 class Vultus {
     constructor() {
         this.cache = new Map();
@@ -67,19 +61,20 @@ class Vultus {
         for (const field of this.fields) {
             if (doc[field.name]) {
                 const fieldContent = this.#sanitizeText(doc[field.name]);
+                const fieldWeight = field.weight || 1;
 
                 if (queryWords.length > 1) {
-                    score += this.#calculatePhraseScore(field, fieldContent, queryWords);
+                    score += this.#calculatePhraseScore(fieldContent, queryWords, fieldWeight);
                 }
 
-                score += this.#calculateWordScore(field, fieldContent, queryWords);
+                score += this.#calculateWordScore(fieldContent, queryWords, fieldWeight);
             }
         }
 
         return score;
     }
 
-    #calculatePhraseScore(field, fieldContent, queryWords) {
+    #calculatePhraseScore(fieldContent, queryWords, fieldWeight) {
         let score = 0;
         const fullQuery = this.#sanitizeText(queryWords.join(' '));
         const someThreshold = 3;
@@ -88,7 +83,7 @@ class Vultus {
             const substring = fieldContent.substring(i, i + fullQuery.length);
             const distance = this.#levenshteinDistance(fullQuery, substring);
             if (distance < someThreshold) {
-                score += (field.weight || 1) * 2 / (distance + 1);
+                score += fieldWeight * 2 / (distance + 1);
                 i += fullQuery.length;
             } else {
                 i++;
@@ -98,16 +93,16 @@ class Vultus {
         return score;
     }
 
-    #calculateWordScore(field, fieldContent, queryWords) {
+    #calculateWordScore(fieldContent, queryWords, fieldWeight) {
         let score = 0;
         const sanitizedQueryWords = queryWords.map(word => this.#sanitizeText(word));
-
         const fieldContentWords = fieldContent.split(/\s+/);
+
         for (const word of sanitizedQueryWords) {
             for (const fieldWord of fieldContentWords) {
                 const distance = this.#levenshteinDistance(word, fieldWord);
                 if (distance < 3) {
-                    score += (field.weight || 1) / (distance + 1);
+                    score += fieldWeight / (distance + 1);
                 }
             }
         }
