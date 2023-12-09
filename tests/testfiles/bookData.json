@@ -1,0 +1,86 @@
+{
+    "1984": {
+        "author": "George Orwell",
+        "genre": "Dystopian",
+        "published": "1949",
+        "keywords": "totalitarianism, surveillance, thoughtcrime, doublethink, newspeak, propaganda, rebellion, memory manipulation, oppression, control",
+        "description": "In a grim future where the state sees and controls all, individuality and dissent are ruthlessly crushed by the ruling Party. With every thought monitored and history constantly rewritten, one man's inner rebellion sets him on a dangerous path. '1984' is George Orwell's chilling vision of a world where freedom is an illusion and where truth is malleable in the hands of the powerful."
+    },
+    "the_iliad": {
+        "author": "Homer",
+        "genre": "Poetry",
+        "published": "8th century BCE",
+        "keywords": "war, honor, wrath, battle, heroism, fate, mortality, gods, conflict, glory",
+        "description": "The Iliad is an ancient Greek epic poem attributed to the legendary poet Homer. Composed around the 8th century BCE, it is one of the oldest and most celebrated works of Western literature. This epic tells the story of the Trojan War, focusing on the heroic deeds and tragic fates of warriors like Achilles, Hector, and Agamemnon. At its core, The Iliad explores the themes of honor, glory, and the consequences of war, offering a gripping portrayal of the human condition in the face of conflict. It is a foundational work of literature that continues to captivate readers with its timeless exploration of heroism, pride, and the complex interplay of gods and mortals."
+    },
+    "jane_eyre": {
+        "author": "Charlotte Bronte",
+        "genre": "Novel",
+        "published": "1847",
+        "keywords": "gothic, love, romance, morality, independence, passion, mystery, redemeption, social class, orphan",
+        "description": "Jane Eyre is a timeless classic novel written by Charlotte Brontë. It tells the captivating story of its eponymous protagonist, Jane Eyre, a strong-willed and resilient orphan who rises above a challenging and often harsh upbringing. The novel traces Jane's journey from her difficult early years at Lowood School to her employment as a governess at Thornfield Hall, where she encounters the enigmatic and brooding Mr. Rochester. A tale of love, self-discovery, and societal constraints, Jane Eyre explores themes of independence, morality, and the pursuit of happiness in the face of adversity. Brontë's masterpiece remains a beloved work of literature known for its complex characters, gothic elements, and the enduring power of Jane's indomitable spirit."
+    },
+    "dracula": {
+        "author": "Bram Stoker",
+        "genre": "Novel",
+        "published": "1897",
+        "keywords": "vampire, gothic, horror, transylvania, blood, castle, seduction, fear, undeath, night",
+        "description": "Set against the dark and eerie backdrop of Transylvania, Bram Stoker's Dracula is a chilling tale of the legendary vampire count and his insidious spread of darkness in England. Through the eyes of multiple narrators, the novel unravels Dracula's quest for fresh blood and the desperate fight of a group led by Professor Van Helsing to thwart his evil designs. A masterful blend of horror, romance, and suspense, Dracula delves deep into themes of lust, fear, and the duality of human nature, solidifying its place as one of the most influential Gothic novels of all time."
+    },
+    "treasure_island": {
+        "author": "Robert Louis Stevenson",
+        "genre": "Adventure",
+        "published": "1883",
+        "keywords": "adventure, pirates, treasure map, island, ship, mutiny, sea, buried gold, parrot, buccaneers",
+        "description": "In the heart of the English coast, a young boy discovers a cryptic map leading to untold riches buried on a distant island. As he embarks on a perilous voyage, treacherous seas and even more treacherous companions challenge his courage and wits. Treasure Island is a timeless tale of adventure, danger, and the pursuit of fortune, where alliances shift like the tides, and trust can be as elusive as the coveted treasure itself."
+    },
+    "a_christmas_carol": {
+        "author": "Charles Dickens",
+        "genre": "Novel",
+        "published": "1843",
+        "keywords": "redemption, ghosts, christmas, victorian, morality, past present and future, regret, generosity, transformation, festivity",
+        "description": "In the cold heart of London, a miserly old man named Ebenezer Scrooge despises everything that embodies the warmth and spirit of Christmas. But this Christmas Eve, he receives unexpected spectral visitors. Through haunting visions of his past, present, and possible future, Scrooge is taken on a transformative journey to rediscover the true meaning of Christmas and to right the wrongs of his life, learning that kindness and compassion can lead to a future bright with joy and hope."
+    },
+    "a_tale_of_two_cities": {
+        "author": "Charles Dickens",
+        "genre": "Historical",
+        "published": "1859",
+        "keywords": "revolution, sacrifice, resurrection, dualities, injustice, guillotine, nobility, poverty, fate, love",
+        "description": "Set against the tumultuous backdrop of the French Revolution, 'A Tale of Two Cities' weaves a story of intertwined destinies and moral struggles. From the corrupt aristocracy of Paris to the bustling streets of London, Dickens paints a vivid portrait of a world in upheaval, exploring themes of sacrifice, redemption, and the profound effects of societal change. It's a tale of two cities and the indomitable human spirit that connects them."
+    },
+    "tarzan_of_the_apes": {
+        "author": "Edgar Rice Burroughs",
+        "genre": "Adventure",
+        "published": "1912",
+        "keywords": "jungle, wilderness, adventure, civilization vs nature, survival, identity, man vs beast, discovery, adaptation, isolation",
+        "description": "In the dense heart of Africa's jungles, a child orphaned by tragedy is adopted by a band of apes. Growing up devoid of human contact, he learns the ways of the wild, becoming master of the jungle realm. But when outsiders invade his sanctuary, he's torn between two worlds: the one he was born into and the one that raised him. 'Tarzan of the Apes' is a captivating tale of adventure, identity, and the eternal battle between man and nature."
+    },
+    "the_great_gatsby": {
+        "author": "F. Scott Fitzgerald",
+        "genre": "Novel",
+        "published": "1925",
+        "keywords": "american dream, jazz age, decadence, obsession, wealth, parties, long island, illusion vs reality, moral decay, unrequited love",
+        "description": "In the shimmering summer heat of 1920s Long Island, Jay Gatsby throws lavish parties in hopes of rekindling a lost love. Amid the glitz and glamour, F. Scott Fitzgerald paints a poignant tale of ambition, obsession, and the relentless pursuit of the elusive American Dream. 'The Great Gatsby' is a timeless reflection on the excesses of an era and the tragic consequences of unchecked desire."
+    },
+    "the_odyssey": {
+        "author": "Homer",
+        "genre": "Poetry",
+        "published": "8th century BCE",
+        "keywords": "journey, heroism, adventure, gods, monsters, homecoming, loyalty, cunning, sea, fate",
+        "description": "The Odyssey follows the epic journey of Odysseus as he seeks to return home to Ithaca after the fall of Troy. Facing a myriad of challenges, from the enchanting Sirens to the wrath of the god Poseidon, Odysseus's tale is one of perseverance, cunning, and the human drive to reunite with loved ones. Alongside his physical journey, the poem delves into themes of identity, honor, and the intervention of the divine in mortal affairs. Complementing its counterpart, The Iliad, The Odyssey stands as a testament to the art of storytelling and the enduring nature of human spirit."
+    },
+    "pride_and_prejudice": {
+        "author": "Jane Austen",
+        "genre": "Romance, Satire",
+        "published": "1813",
+        "keywords": "marriage, society, class, manners, courtship, prejudice, women, family, love, irony",
+        "description": "Pride and Prejudice, a classic novel by Jane Austen, offers a witty and insightful portrayal of early 19th-century English society through the lens of courtship and marriage. It follows the protagonist, Elizabeth Bennet, as she navigates the complexities of love, family pressures, and societal expectations. The narrative, rich with irony and humor, critically examines the roles and limitations placed on women during this era. Through Elizabeth's interactions, particularly with the proud Mr. Darcy, the novel explores themes of pride, prejudice, and the transformative power of love, revealing the profound impact of personal growth and understanding in relationships."
+    },
+    "the_picture_of_dorian_gray": {
+        "author": "Oscar Wilde",
+        "genre": "Philosophical, Gothic, Fiction",
+        "published": "1890",
+        "keywords": "aesthetics, morality, hedonism, beauty, youth, corruption, art, duality, vanity, supernatural",
+        "description": "The Picture of Dorian Gray, by Oscar Wilde, delves into the dark realms of vanity, moral ambiguity, and the pursuit of pleasure. The novel follows Dorian Gray, a young man of extraordinary beauty, who becomes the subject of a portrait by artist Basil Hallward. Influenced by the cynical Lord Henry, Dorian wishes for his portrait to age and bear the scars of his sins, while he himself remains youthful and unblemished. As Dorian indulges in a hedonistic lifestyle, his hidden portrait transforms into a grotesque reflection of his moral decay. Wilde's novel is a poignant exploration of the interplay between art, beauty, and morality, presenting a compelling commentary on the nature of the self and the consequences of unchecked desire."
+    }
+}
