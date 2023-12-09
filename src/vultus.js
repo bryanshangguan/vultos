@@ -1,5 +1,15 @@
 import { Field } from './utils/field.js';
 
+/* future algorithm improvements: 
+stemming or lemmatization
+synonyms
+handle special characters and punctuation
+caching frequently used operations such as stemming and Levenshtein distance
+filter by options
+spell checker
+search suggestions and autocomplete
+*/
+
 class Vultus {
     constructor() {
         this.docs = [];
