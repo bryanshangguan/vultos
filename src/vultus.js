@@ -3,11 +3,11 @@ import { list_2_3, list_4 } from './lists.js';
 
 class Vultus {
     constructor(config) {
+        this.schema = config.schema;
         this.cache = new Map();
         this.levenshteinCache = new Map();
         this.docs = [];
         this.fields = [];
-        this.schema = config.schema;
 
         for (const key in this.schema) {
             this.fields.push(new Field(key));
@@ -47,7 +47,13 @@ class Vultus {
         }
     
         const queryWords = query.toLowerCase().split(/\s+/);
-        let scoredDocs = this.docs.map(doc => {
+        let filteredDocs = this.docs;
+    
+        if (parameters && parameters.where) {
+            filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
+        }
+    
+        let scoredDocs = filteredDocs.map(doc => {
             let score = this.#calculateScore(doc, queryWords);
             return { doc, score };
         });
@@ -74,6 +80,17 @@ class Vultus {
             results: sortedDocs,
             timeTaken: endTime - startTime
         };
+    }    
+    
+    #applyWhereClause(docs, whereClause) {
+        return docs.filter(doc => {
+            for (const key in whereClause) {
+                if (doc[key] !== whereClause[key]) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }    
 
     #createCacheKey(query, parameters) {
@@ -109,12 +126,14 @@ class Vultus {
                     score += this.#calculateWordScore(sanitizedFieldContent, queryWords, fieldWeight);
                 } else if (fieldType === 'number') {
                     score += this.#calculateNumberScore(fieldContent, queryWords, fieldWeight);
+                } else if (fieldType === 'boolean') {
+                    score += this.#calculateBooleanScore(fieldContent, queryWords, fieldWeight);
                 }
             }
         }
     
         return score;
-    }    
+    }       
 
     #calculatePhraseScore(fieldContent, queryWords, fieldWeight) {
         let score = 0;
@@ -160,8 +179,25 @@ class Vultus {
             }
         });
         return score;
-    }    
+    }
 
+    #calculateBooleanScore(fieldContent, queryWords, fieldWeight) {
+        let score = 0;
+        const booleanQueryWords = queryWords.map(word => {
+            if (word === 'true') return true;
+            if (word === 'false') return false;
+            return null;
+        });
+    
+        booleanQueryWords.forEach(queryWord => {
+            if (queryWord !== null && queryWord === fieldContent) {
+                score += fieldWeight;
+            }
+        });
+    
+        return score;
+    }
+       
     #sanitizeText(text) {
         if (typeof text === 'string') {
             return text.replace(/[^\w\s]/gi, '').toLowerCase();
