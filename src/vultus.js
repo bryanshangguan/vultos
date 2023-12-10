@@ -34,76 +34,95 @@ export default class Vultus {
     search(query, parameters) {
         const startTime = performance.now();
 
-        const cacheKey = this.#createCacheKey(query, parameters);
-        if (this.cache.has(cacheKey)) {
-            const cachedResults = this.cache.get(cacheKey);
-            return {
-                elapsed: performance.now() - startTime,
-                count: cachedResults.length,
-                hits: cachedResults.map(doc => ({ score: this.#calculateScore(doc, query.toLowerCase().split(/\s+/)), document: doc }))
-            };
-        }
-
-        if (parameters) {
-            this.#setParameters(parameters);
-        }
-
-        const queryWords = query.toLowerCase().split(/\s+/);
-        let filteredDocs = this.docs;
-
-        if (parameters && parameters.where) {
-            filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
-        }
-
-        let scoredDocs = filteredDocs.map(doc => {
-            let score = this.#calculateScore(doc, queryWords);
-            return { doc, score };
-        });
-
-        scoredDocs = scoredDocs.filter(item => item.score > 0)
-            .sort((a, b) => b.score - a.score);
-
-        let uniqueDocs = new Set();
-        const hits = [];
-
-        for (const item of scoredDocs) {
-            const docStr = JSON.stringify(item.doc);
-            if (!uniqueDocs.has(docStr)) {
-                uniqueDocs.add(docStr);
-                hits.push({ score: item.score, document: item.doc });
+        try {
+            const cacheKey = this.#createCacheKey(query, parameters);
+            if (this.cache.has(cacheKey)) {
+                const cachedResults = this.cache.get(cacheKey);
+                return {
+                    elapsed: performance.now() - startTime,
+                    count: cachedResults.length,
+                    hits: cachedResults.map(doc => ({ score: this.#calculateScore(doc, query.toLowerCase().split(/\s+/)), document: doc }))
+                };
             }
+
+            if (parameters) {
+                this.#setParameters(parameters);
+            }
+
+            const queryWords = query.toLowerCase().split(/\s+/);
+            let filteredDocs = this.docs;
+
+            if (parameters && parameters.where) {
+                filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
+            }
+
+            let scoredDocs = filteredDocs.map(doc => {
+                let score = this.#calculateScore(doc, queryWords);
+                return { doc, score };
+            });
+
+            scoredDocs = scoredDocs.filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score);
+
+            let uniqueDocs = new Set();
+            const hits = [];
+
+            for (const item of scoredDocs) {
+                const docStr = JSON.stringify(item.doc);
+                if (!uniqueDocs.has(docStr)) {
+                    uniqueDocs.add(docStr);
+                    hits.push({ score: item.score, document: item.doc });
+                }
+            }
+
+            this.cache.set(cacheKey, hits);
+
+            const endTime = performance.now();
+
+            return {
+                elapsed: endTime - startTime,
+                count: hits.length,
+                hits: hits
+            };
+        } catch (error) {
+            console.warn(error.message);
+            return; // Exit the search method without returning results
         }
-
-        this.cache.set(cacheKey, hits);
-
-        const endTime = performance.now();
-
-        return {
-            elapsed: endTime - startTime,
-            count: hits.length,
-            hits: hits
-        };
     }
 
     #applyWhereClause(docs, whereClause) {
+        for (const key in whereClause) {
+            if (!this.schema.hasOwnProperty(key)) {
+                throw new Error(`Field '${key}' does not exist in the schema.`);
+            }
+
+            const condition = whereClause[key];
+            const expectedType = this.schema[key];
+
+            if (typeof condition === 'object' && condition !== null) {
+                if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
+                    if (expectedType !== 'number') {
+                        throw new Error(`Field '${key}' is not a number, but a 'between' condition was used.`);
+                    }
+                } else {
+                    throw new Error(`Unsupported condition for field '${key}'.`);
+                }
+            } else {
+                if (typeof condition === 'boolean' && expectedType !== 'boolean') {
+                    throw new Error(`Field '${key}' is not a boolean, but a boolean condition was used.`);
+                }
+            }
+        }
+
         return docs.filter(doc => {
             for (const key in whereClause) {
-                if (!this.schema.hasOwnProperty(key)) {
-                    console.warn(`Field '${key}' does not exist in the schema.`);
-                    continue;
-                }
-
                 const condition = whereClause[key];
                 const docValue = doc[key];
 
                 if (typeof condition === 'object' && condition !== null) {
-                    if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
-                        const [min, max] = condition.between;
-                        if (docValue < min || docValue > max) {
-                            return false;
-                        }
-                    } else {
-                        console.warn(`Unsupported condition for field '${key}'.`);
+                    const [min, max] = condition.between;
+                    if (docValue < min || docValue > max) {
+                        return false;
                     }
                 } else {
                     if (docValue !== condition) {
@@ -137,19 +156,19 @@ export default class Vultus {
                 }
             }
         }
-    }    
+    }
 
     #calculateScore(doc, queryWords) {
         let score = 0;
         let maxPossibleScore = 0;
-    
+
         for (const field of this.fields) {
             if (doc[field.name] !== undefined) {
                 const fieldType = this.schema[field.name];
                 const fieldContent = doc[field.name];
                 const fieldWeight = field.weight || 1;
                 maxPossibleScore += fieldWeight * 5;
-    
+
                 if (fieldType === 'string') {
                     const sanitizedFieldContent = this.#sanitizeText(fieldContent);
                     if (queryWords.length > 1) {
@@ -163,10 +182,10 @@ export default class Vultus {
                 }
             }
         }
-    
+
         return maxPossibleScore > 0 ? Math.min(score / maxPossibleScore, 1) : 0;
     }
-    
+
     #calculatePhraseScore(fieldContent, queryWords, fieldWeight) {
         let score = 0;
         const fullQuery = this.#sanitizeText(queryWords.join(' '));

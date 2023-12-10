@@ -118,12 +118,9 @@ searchBar.addEventListener('keypress', (e) => {
         const searchResults = vultus.search(searchQuery, {
             fields: {
                 title: { weight: 5 },
-                author: { weight: 3 },
-                keywords: { weight: 1 },
-                year: { weight: 1 }
+                author: { weight: 3 }
             },
             where: {
-                isNew: true,
                 year: {
                     between: [-999, 2000]
                 }
