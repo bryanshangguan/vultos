@@ -17,7 +17,7 @@
 import Vultus from './path/to/vultus.js'
 ```
 
-Usage<h3>Installation</h3>
+<h3>Usage</h3>
 To use Vultus in your project, start by creating a new instance with a defined schema:
 
 ```js
