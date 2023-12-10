@@ -1,23 +1,26 @@
-Vultus Library Documentation
-<br />
-<p align="center">
+<h1>Vultus Library Documentation</h1>
+<br/>
+<h4>
   Introducing Vultus, a powerful and flexible search library that provides robust full-text capabilities.
-</p>
+</h4>
 <br/>
 
-Vultus offers a wide range of features, including:
+<h3>Vultus offers a wide range of features, including:</h3>
+<ul>
+    <li>Full-text search with customizable weighting and scoring.</li>
+    <li>Boolean and numeric range queries.</li>
+    <li>Extensible schema definition for varied data types.</li>
+    <li>Performance optimizations with caching and efficient querying.</li>
+</ul>
 
-Full-text search with customizable weighting and scoring.
-Boolean and numeric range queries.
-Extensible schema definition for varied data types.
-Performance optimizations with caching and efficient querying.
-Installation
+
+<h3>Installation</h3>
 
 ```js
 import Vultus from './path/to/vultus.js'
 ```
 
-Usage
+Usage<h3>Installation</h3>
 To use Vultus in your project, start by creating a new instance with a defined schema:
 
 ```js
@@ -30,7 +33,7 @@ const vultus = new Vultus({
 });
 ```
 
-Add documents to your Vultus instance:
+<h3>Add documents to your Vultus instance:</h3>
 
 ```js
 vultus.addDoc({
@@ -40,15 +43,14 @@ vultus.addDoc({
 });
 ```
 
-Perform a search:
+<h3>Perform a search:</h3>
 
 ```js
 const results = vultus.search('search term');
 ```
 
-Advanced Search Capabilities
-
-Vultus provides advanced search functionalities such as:
+<h3>Advanced Search Capabilities</h3>
+<p>Vultus provides advanced search functionalities such as:</p>
 <ul>
     <li>Weighted fields for prioritizing certain document properties.</li>
     <li>Range queries for numeric and boolean data types.</li>
