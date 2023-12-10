@@ -1,9 +1,7 @@
-<h1>Documentation</h1>
-<h4>
-  Introducing Vultos, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.
-</h4>
-<br>
-<h3>Vultos offers a wide range of features, including:</h3>
+# Documentation
+Introducing Vultos, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.
+
+# Highlighted features
 <ul>
     <li>Full-text search with customizable weighting and scoring.</li>
     <li>Boolean and numeric range queries.</li>
@@ -11,13 +9,18 @@
     <li>Performance optimizations with caching and efficient querying.</li>
 </ul>
 
-<h3>Installation</h3>
+# Installation
+You can install Vultos using `npm`
 
-```js
-import Vultos from './path/to/vultos.js'
+```sh
+npm i vultos
 ```
 
-<h3>Usage</h3>
+```js
+import Vultos from 'vultos'
+```
+
+# Intialization
 To use Vultus in your project, start by creating a new instance with a defined schema:
 
 ```js
@@ -30,7 +33,7 @@ const vultos = new Vultos({
 });
 ```
 
-<h3>Add documents to your Vultos instance:</h3>
+# Adding documents
 
 ```js
 vultos.addDoc({
@@ -40,14 +43,15 @@ vultos.addDoc({
 });
 ```
 
-<h3>Perform a search:</h3>
+# Searching
 
 ```js
 const results = vultos.search('search term');
 ```
 
-<h3>Advanced Search Capabilities</h3>
-<p>Vultos provides advanced search functionalities such as:</p>
+# Advanced search
+Vultos provides advanced search functionalities such as:
+
 <ul>
     <li>Weighted fields for prioritizing certain document properties.</li>
     <li>Range queries for numeric and boolean data types.</li>
