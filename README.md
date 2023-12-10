@@ -1,10 +1,8 @@
 <h1>Vultus Library Documentation</h1>
-<br/>
 <h4>
   Introducing Vultus, a powerful and flexible search library that provides robust full-text capabilities.
 </h4>
-<br/>
-
+<br>
 <h3>Vultus offers a wide range of features, including:</h3>
 <ul>
     <li>Full-text search with customizable weighting and scoring.</li>
@@ -12,7 +10,6 @@
     <li>Extensible schema definition for varied data types.</li>
     <li>Performance optimizations with caching and efficient querying.</li>
 </ul>
-
 
 <h3>Installation</h3>
 
