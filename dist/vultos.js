@@ -1,7 +1,7 @@
 import { Field } from './field.js';
 import { list_2_3, list_4 } from './lists.js';
 
-export default class Vultus {
+export default class Vultos {
     constructor(config) {
         this.schema = config.schema;
         this.cache = new Map();

@@ -1,9 +1,9 @@
-<h1>Vultus Documentation</h1>
+<h1>Documentation</h1>
 <h4>
-  Introducing Vultus, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.
+  Introducing Vultos, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.
 </h4>
 <br>
-<h3>Vultus offers a wide range of features, including:</h3>
+<h3>Vultos offers a wide range of features, including:</h3>
 <ul>
     <li>Full-text search with customizable weighting and scoring.</li>
     <li>Boolean and numeric range queries.</li>
@@ -14,14 +14,14 @@
 <h3>Installation</h3>
 
 ```js
-import Vultus from './path/to/vultus.js'
+import Vultos from './path/to/vultos.js'
 ```
 
 <h3>Usage</h3>
 To use Vultus in your project, start by creating a new instance with a defined schema:
 
 ```js
-const vultus = new Vultus({
+const vultos = new Vultos({
     schema: {
         title: 'string',
         author: 'string',
@@ -30,10 +30,10 @@ const vultus = new Vultus({
 });
 ```
 
-<h3>Add documents to your Vultus instance:</h3>
+<h3>Add documents to your Vultos instance:</h3>
 
 ```js
-vultus.addDoc({
+vultos.addDoc({
     title: 'Example Title',
     author: 'Author Name',
     // other fields...
@@ -43,11 +43,11 @@ vultus.addDoc({
 <h3>Perform a search:</h3>
 
 ```js
-const results = vultus.search('search term');
+const results = vultos.search('search term');
 ```
 
 <h3>Advanced Search Capabilities</h3>
-<p>Vultus provides advanced search functionalities such as:</p>
+<p>Vultos provides advanced search functionalities such as:</p>
 <ul>
     <li>Weighted fields for prioritizing certain document properties.</li>
     <li>Range queries for numeric and boolean data types.</li>
@@ -55,7 +55,7 @@ const results = vultus.search('search term');
 </ul>
 
 ```js
-const searchResults = vultus.search('search term', {
+const searchResults = vultos.search('search term', {
     fields: {
         title: { weight: 5 },
         author: { weight: 3 }
@@ -68,4 +68,4 @@ const searchResults = vultus.search('search term', {
 ```
 
 License
-Vultus is licensed under the MIT License.
+Vultos is licensed under the MIT License.
