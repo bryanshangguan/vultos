@@ -1,6 +1,6 @@
 {
   "name": "vultos",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "<h1>Vultus Documentation</h1>\r <h4>\r   Introducing Vultus, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.\r </h4>\r <br>\r <h3>Vultus offers a wide range of features, including:</h3>\r <ul>\r     <li>Full-text search with customizable weighting and scoring.</li>\r     <li>Boolean and numeric range queries.</li>\r     <li>Extensible schema definition for varied data types.</li>\r     <li>Performance optimizations with caching and efficient querying.</li>\r </ul>",
   "main": "dist/vultus.js",
@@ -15,10 +15,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bryanshangguan/vultus.js.git"
+    "url": "git+https://github.com/bryanshangguan/vultos.js.git"
   },
   "bugs": {
-    "url": "https://github.com/bryanshangguan/vultus.js/issues"
+    "url": "https://github.com/bryanshangguan/vultos.js/issues"
   },
-  "homepage": "https://github.com/bryanshangguan/vultus.js#readme"
+  "homepage": "https://github.com/bryanshangguan/vultos.js#readme"
 }
