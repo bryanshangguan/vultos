@@ -1,4 +1,4 @@
-import Vultus from '../dist/vultos.js';
+import Vultos from '../dist/vultos.js';
 
 const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
@@ -91,7 +91,7 @@ const documents = [
     }
 ];
 
-const vultus = new Vultus({
+const vultos = new Vultos({
     schema: {
         title: 'string',
         author: 'string',
@@ -105,17 +105,17 @@ init();
 
 function init() {
     for (let i = 0; i < documents.length; i++) {
-        vultus.addDoc(documents[i]);
+        vultos.addDoc(documents[i]);
     }
 
-    originalDocsOutput.textContent = JSON.stringify(vultus.docs, null, 2);
+    originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
 }
 
 searchBar.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         console.clear();
         const searchQuery = searchBar.value;
-        const searchResults = vultus.search(searchQuery, {
+        const searchResults = vultos.search(searchQuery, {
             fields: {
                 title: { weight: 5 },
                 author: { weight: 3 }
