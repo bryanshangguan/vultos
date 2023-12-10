@@ -18,7 +18,7 @@ export default class Vultus {
         if (this.#validateDoc(doc)) {
             this.docs.push(doc);
         } else {
-            console.warn('Document does not match the schema:', doc);
+            console.error('Document does not match schema:', doc);
         }
     }
 
@@ -34,6 +34,18 @@ export default class Vultus {
     search(query, parameters) {
         const startTime = performance.now();
 
+        if (parameters) {
+            const validKeys = ['fields', 'where'];
+            for (const key in parameters) {
+                if (!validKeys.includes(key)) {
+                    console.error(`Unexpected parameter key '${key}'. Expected keys are 'fields' and 'where'`);
+                    return;
+                }
+            }
+
+            this.#setParameters(parameters);
+        }
+
         try {
             const cacheKey = this.#createCacheKey(query, parameters);
             if (this.cache.has(cacheKey)) {
@@ -41,13 +53,9 @@ export default class Vultus {
                 return {
                     elapsed: performance.now() - startTime,
                     count: cachedResults.length,
-                    hits: cachedResults.map(doc => ({ score: this.#calculateScore(doc, query.toLowerCase().split(/\s+/)), document: doc }))
+                    hits: cachedResults
                 };
-            }
-
-            if (parameters) {
-                this.#setParameters(parameters);
-            }
+            }            
 
             const queryWords = query.toLowerCase().split(/\s+/);
             let filteredDocs = this.docs;
@@ -84,16 +92,17 @@ export default class Vultus {
                 count: hits.length,
                 hits: hits
             };
+
         } catch (error) {
-            console.warn(error.message);
-            return; // Exit the search method without returning results
+            console.error(error.message);
+            return;
         }
     }
 
     #applyWhereClause(docs, whereClause) {
         for (const key in whereClause) {
             if (!this.schema.hasOwnProperty(key)) {
-                throw new Error(`Field '${key}' does not exist in the schema.`);
+                throw new Error(`Field '${key}' does not exist in the schema`);
             }
 
             const condition = whereClause[key];
@@ -102,14 +111,14 @@ export default class Vultus {
             if (typeof condition === 'object' && condition !== null) {
                 if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
                     if (expectedType !== 'number') {
-                        throw new Error(`Field '${key}' is not a number, but a 'between' condition was used.`);
+                        throw new Error(`Field '${key}' is not a number, but a 'between' condition was used`);
                     }
                 } else {
                     throw new Error(`Unsupported condition for field '${key}'.`);
                 }
             } else {
                 if (typeof condition === 'boolean' && expectedType !== 'boolean') {
-                    throw new Error(`Field '${key}' is not a boolean, but a boolean condition was used.`);
+                    throw new Error(`Field '${key}' is not a boolean, but a boolean condition was used`);
                 }
             }
         }
@@ -145,10 +154,10 @@ export default class Vultus {
                 const field = this.fields.find(f => f.name === fieldName);
                 if (field && fieldParams.weight !== undefined) {
                     if (fieldParams.weight > 5) {
-                        console.warn(`Weight for field '${fieldName}' is too high, setting to 5.`);
+                        console.warn(`Weight for field '${fieldName}' is too high, setting to 5`);
                         field.setWeight(5);
                     } else if (fieldParams.weight < 1) {
-                        console.warn(`Weight for field '${fieldName}' is too low, setting to 1.`);
+                        console.warn(`Weight for field '${fieldName}' is too low, setting to 1`);
                         field.setWeight(1);
                     } else {
                         field.setWeight(fieldParams.weight);

@@ -121,6 +121,7 @@ searchBar.addEventListener('keypress', (e) => {
                 author: { weight: 3 }
             },
             where: {
+                isNew: true,
                 year: {
                     between: [-999, 2000]
                 }
