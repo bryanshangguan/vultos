@@ -1,13 +1,9 @@
 Vultus Library Documentation
-<p align="center">
-  <img src="/misc/readme/orama-readme_logo-dark.png#gh-dark-mode-only" />
-  <img src="/misc/readme/orama-readme_logo-light.png#gh-light-mode-only" />
-</p>
 <br />
 <p align="center">
   Introducing Vultus, a powerful and flexible search library that provides robust full-text capabilities.
 </p>
-<br />
+<br/>
 
 Vultus offers a wide range of features, including:
 
@@ -17,16 +13,14 @@ Extensible schema definition for varied data types.
 Performance optimizations with caching and efficient querying.
 Installation
 
-<script type="module">
-  import Vultus from './path/to/vultus.js'
-</script>
+```js
+import Vultus from './path/to/vultus.js'
+```
+
 Usage
 To use Vultus in your project, start by creating a new instance with a defined schema:
 
-js
-Copy code
-import Vultus from '@orama/orama';
-
+```js
 const vultus = new Vultus({
     schema: {
         title: 'string',
@@ -34,24 +28,34 @@ const vultus = new Vultus({
         // other fields...
     }
 });
+```
+
 Add documents to your Vultus instance:
 
+```js
 vultus.addDoc({
     title: 'Example Title',
     author: 'Author Name',
     // other fields...
 });
+```
 
 Perform a search:
+
+```js
 const results = vultus.search('search term');
+```
 
 Advanced Search Capabilities
+
 Vultus provides advanced search functionalities such as:
+<ul>
+    <li>Weighted fields for prioritizing certain document properties.</li>
+    <li>Range queries for numeric and boolean data types.</li>
+    <li>Customizable scoring mechanisms for more refined search results.</li>
+</ul>
 
-Weighted fields for prioritizing certain document properties.
-Range queries for numeric and boolean data types.
-Customizable scoring mechanisms for more refined search results.
-
+```js
 const searchResults = vultus.search('search term', {
     fields: {
         title: { weight: 5 },
@@ -62,6 +66,7 @@ const searchResults = vultus.search('search term', {
         year: { between: [1900, 2000] }
     }
 });
+```
 
 License
 Vultus is licensed under the MIT License.
