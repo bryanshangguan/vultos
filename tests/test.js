@@ -1,4 +1,4 @@
-import Vultus from '../src/vultus.js';
+import Vultus from '../dist/vultus.js';
 
 const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');

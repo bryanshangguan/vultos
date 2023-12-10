@@ -1,6 +1,6 @@
-<h1>Vultus Library Documentation</h1>
+<h1>Vultus Documentation</h1>
 <h4>
-  Introducing Vultus, a powerful and flexible search library that provides robust full-text capabilities.
+  Introducing Vultus, a powerful and flexible (fuzzy) search library that provides robust full-text capabilities.
 </h4>
 <br>
 <h3>Vultus offers a wide range of features, including:</h3>
