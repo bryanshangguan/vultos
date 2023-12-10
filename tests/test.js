@@ -1,4 +1,4 @@
-import { Vultus } from '../src/vultus.js';
+import Vultus from '../src/vultus.js';
 
 const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
@@ -117,14 +117,15 @@ searchBar.addEventListener('keypress', (e) => {
         const searchQuery = searchBar.value;
         const searchResults = vultus.search(searchQuery, {
             fields: {
-                title: { weight: 1 },
-                author: { weight: 1 },
+                title: { weight: 5 },
+                author: { weight: 3 },
                 keywords: { weight: 1 },
-                year: { weight: 1}
-            }, where: {
+                year: { weight: 1 }
+            },
+            where: {
                 isNew: true,
                 year: {
-                    between: [1920, 2008]
+                    between: [-999, 2000]
                 }
             }
         });

@@ -1,7 +1,7 @@
 import { Field } from './field.js';
 import { list_2_3, list_4 } from './lists.js';
 
-class Vultus {
+export default class Vultus {
     constructor(config) {
         this.schema = config.schema;
         this.cache = new Map();
@@ -33,65 +33,87 @@ class Vultus {
 
     search(query, parameters) {
         const startTime = performance.now();
-    
+
         const cacheKey = this.#createCacheKey(query, parameters);
         if (this.cache.has(cacheKey)) {
+            const cachedResults = this.cache.get(cacheKey);
             return {
-                results: this.cache.get(cacheKey),
-                timeTaken: performance.now() - startTime
+                elapsed: performance.now() - startTime,
+                count: cachedResults.length,
+                hits: cachedResults.map(doc => ({ score: this.#calculateScore(doc, query.toLowerCase().split(/\s+/)), document: doc }))
             };
         }
-    
+
         if (parameters) {
             this.#setParameters(parameters);
         }
-    
+
         const queryWords = query.toLowerCase().split(/\s+/);
         let filteredDocs = this.docs;
-    
+
         if (parameters && parameters.where) {
             filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
         }
-    
+
         let scoredDocs = filteredDocs.map(doc => {
             let score = this.#calculateScore(doc, queryWords);
             return { doc, score };
         });
-    
+
         scoredDocs = scoredDocs.filter(item => item.score > 0)
             .sort((a, b) => b.score - a.score);
-    
+
         let uniqueDocs = new Set();
-        const sortedDocs = [];
-    
+        const hits = [];
+
         for (const item of scoredDocs) {
             const docStr = JSON.stringify(item.doc);
             if (!uniqueDocs.has(docStr)) {
                 uniqueDocs.add(docStr);
-                sortedDocs.push(item.doc);
+                hits.push({ score: item.score, document: item.doc });
             }
         }
-    
-        this.cache.set(cacheKey, sortedDocs);
-    
+
+        this.cache.set(cacheKey, hits);
+
         const endTime = performance.now();
-    
+
         return {
-            results: sortedDocs,
-            timeTaken: endTime - startTime
+            elapsed: endTime - startTime,
+            count: hits.length,
+            hits: hits
         };
-    }    
-    
+    }
+
     #applyWhereClause(docs, whereClause) {
         return docs.filter(doc => {
             for (const key in whereClause) {
-                if (doc[key] !== whereClause[key]) {
-                    return false;
+                if (!this.schema.hasOwnProperty(key)) {
+                    console.warn(`Field '${key}' does not exist in the schema.`);
+                    continue;
+                }
+
+                const condition = whereClause[key];
+                const docValue = doc[key];
+
+                if (typeof condition === 'object' && condition !== null) {
+                    if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
+                        const [min, max] = condition.between;
+                        if (docValue < min || docValue > max) {
+                            return false;
+                        }
+                    } else {
+                        console.warn(`Unsupported condition for field '${key}'.`);
+                    }
+                } else {
+                    if (docValue !== condition) {
+                        return false;
+                    }
                 }
             }
             return true;
         });
-    }    
+    }
 
     #createCacheKey(query, parameters) {
         return JSON.stringify({ query, parameters });
@@ -102,21 +124,31 @@ class Vultus {
             for (const fieldName in parameters.fields) {
                 const fieldParams = parameters.fields[fieldName];
                 const field = this.fields.find(f => f.name === fieldName);
-                if (field && fieldParams.weight) {
-                    field.setWeight(fieldParams.weight);
+                if (field && fieldParams.weight !== undefined) {
+                    if (fieldParams.weight > 5) {
+                        console.warn(`Weight for field '${fieldName}' is too high, setting to 5.`);
+                        field.setWeight(5);
+                    } else if (fieldParams.weight < 1) {
+                        console.warn(`Weight for field '${fieldName}' is too low, setting to 1.`);
+                        field.setWeight(1);
+                    } else {
+                        field.setWeight(fieldParams.weight);
+                    }
                 }
             }
         }
-    }
+    }    
 
     #calculateScore(doc, queryWords) {
         let score = 0;
+        let maxPossibleScore = 0;
     
         for (const field of this.fields) {
             if (doc[field.name] !== undefined) {
                 const fieldType = this.schema[field.name];
                 const fieldContent = doc[field.name];
                 const fieldWeight = field.weight || 1;
+                maxPossibleScore += fieldWeight * 5;
     
                 if (fieldType === 'string') {
                     const sanitizedFieldContent = this.#sanitizeText(fieldContent);
@@ -132,9 +164,9 @@ class Vultus {
             }
         }
     
-        return score;
-    }       
-
+        return maxPossibleScore > 0 ? Math.min(score / maxPossibleScore, 1) : 0;
+    }
+    
     #calculatePhraseScore(fieldContent, queryWords, fieldWeight) {
         let score = 0;
         const fullQuery = this.#sanitizeText(queryWords.join(' '));
@@ -158,7 +190,7 @@ class Vultus {
         let score = 0;
         const sanitizedQueryWords = queryWords.map(word => this.#stemmer(this.#sanitizeText(word)));
         const fieldContentWords = fieldContent.split(/\s+/).map(word => this.#stemmer(word));
-    
+
         for (const word of sanitizedQueryWords) {
             for (const fieldWord of fieldContentWords) {
                 const distance = this.#levenshteinDistance(word, fieldWord);
@@ -167,7 +199,7 @@ class Vultus {
                 }
             }
         }
-    
+
         return score;
     }
 
@@ -188,16 +220,16 @@ class Vultus {
             if (word === 'false') return false;
             return null;
         });
-    
+
         booleanQueryWords.forEach(queryWord => {
             if (queryWord !== null && queryWord === fieldContent) {
                 score += fieldWeight;
             }
         });
-    
+
         return score;
     }
-       
+
     #sanitizeText(text) {
         if (typeof text === 'string') {
             return text.replace(/[^\w\s]/gi, '').toLowerCase();
@@ -210,7 +242,7 @@ class Vultus {
         if (this.levenshteinCache.has(cacheKey)) {
             return this.levenshteinCache.get(cacheKey);
         }
-    
+
         const matrix = [];
         for (let i = 0; i <= b.length; i++) {
             matrix[i] = [i];
@@ -227,7 +259,7 @@ class Vultus {
                 }
             }
         }
-    
+
         const result = matrix[b.length][a.length];
         this.levenshteinCache.set(cacheKey, result);
         return result;
@@ -238,10 +270,10 @@ class Vultus {
         const reAtBlIz = /(at|bl|iz)$/;
         const reDoubleConsonant = /([^aeiouylsz])\1$/;
         const reCvc = /[^aeiou][aeiouy][^aeiouwxy]$/;
-    
+
         word = word.replace(/(sses|ies)$/, "ss");
         word = word.replace(/([^s])s$/, "$1");
-    
+
         if (/(eed|eedly)$/.test(word)) {
             word = word.replace(/(eed|eedly)$/, "ee");
         } else if (reEdIngLy.test(word)) {
@@ -256,31 +288,29 @@ class Vultus {
                 word = base;
             }
         }
-    
+
         word = word.replace(/(y|Y)$/, "i");
-    
+
         const step2and3list = list_2_3;
         const step4list = list_4;
-        
+
         for (let [suffix, replacement] of Object.entries(step2and3list)) {
             if (word.endsWith(suffix)) {
                 word = word.replace(new RegExp(suffix + "$"), replacement);
                 return word;
             }
         }
-    
+
         for (let suffix of step4list) {
             if (word.endsWith(suffix)) {
                 word = word.replace(new RegExp(suffix + "$"), "");
                 return word;
             }
         }
-    
+
         word = word.replace(/e$/, "");
         word = word.replace(/(ll)$/, "l");
-    
+
         return word;
     }
 }
-
-export { Vultus };
