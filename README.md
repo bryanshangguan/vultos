@@ -15,19 +15,33 @@ You can install Vultos using `npm`
 ```sh
 npm i vultos
 ```
+Or import it directly in a browser module:
+
+```html
+<html>
+  <body>
+    <script type="module">
+      import { Vultos } from 'https://unpkg.com/vultos@latest/dist/vultos.js';
+
+      // ...
+    </script>
+  </body>
+</html>
+```
+
+# Usage
+To use Vultos in your project, start by creating a new instance with a defined schema. 
+Currently, Vultos supports string, numbers, and booleans.
 
 ```js
 import Vultos from 'vultos'
-```
 
-# Intialization
-To use Vultus in your project, start by creating a new instance with a defined schema:
-
-```js
 const vultos = new Vultos({
     schema: {
         title: 'string',
         author: 'string',
+        year: 'number',
+        isNew: 'boolean'
         // other fields...
     }
 });
@@ -38,7 +52,9 @@ const vultos = new Vultos({
 ```js
 vultos.addDoc({
     title: 'Example Title',
-    author: 'Author Name',
+    author: 'Example Author',
+    year: 2000,
+    isNew: false,
     // other fields...
 });
 ```
@@ -46,20 +62,25 @@ vultos.addDoc({
 # Searching
 
 ```js
-const results = vultos.search('search term');
+const results = vultos.search('search query');
 ```
 
-# Advanced search
-Vultos provides advanced search functionalities such as:
-
-<ul>
-    <li>Weighted fields for prioritizing certain document properties.</li>
-    <li>Range queries for numeric and boolean data types.</li>
-    <li>Customizable scoring mechanisms for more refined search results.</li>
-</ul>
+# Searching configuration
+The configuration allows for more precise querying. Certain fields can be weighted differently from 1-5 with the default being 1 for each unspecified field.
 
 ```js
-const searchResults = vultos.search('search term', {
+const searchResults = vultos.search('search query', {
+    fields: {
+        title: { weight: 5 },
+        author: { weight: 3 }
+    }}
+});
+```
+
+The `where` clause supports conditions on boolean fields and range queries on numeric fields. For example:
+
+```js
+const searchResults = vultos.search('search query', {
     fields: {
         title: { weight: 5 },
         author: { weight: 3 }
