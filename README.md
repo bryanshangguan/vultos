@@ -29,7 +29,7 @@ Or import it directly in a browser module:
 </html>
 ```
 
-# Usage
+# Initialization
 To use Vultos in your project, start by creating a new instance with a defined schema. 
 Currently, Vultos supports string, numbers, and booleans.
 
@@ -48,6 +48,7 @@ const vultos = new Vultos({
 ```
 
 # Adding documents
+Each document added must match the schema used during intialization.
 
 ```js
 vultos.addDoc({
@@ -60,12 +61,13 @@ vultos.addDoc({
 ```
 
 # Searching
+Searching is as simple calling he search method with a specified query.
 
 ```js
 const results = vultos.search('search query');
 ```
 
-# Searching configuration
+# Search configuration
 The configuration allows for more precise querying. Certain fields can be weighted differently from 1-5 with the default being 1 for each unspecified field.
 
 ```js
