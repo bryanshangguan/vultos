@@ -6,7 +6,7 @@ Introducing Vultos, a powerful and flexible (fuzzy) search library that provides
     <li>Full-text search with customizable weighting and scoring.</li>
     <li>Boolean and numeric range queries.</li>
     <li>Extensible schema definition for varied data types.</li>
-    <li>Performance optimizations with caching and efficient querying.</li>
+    <li>Performance optimizations with indexing, caching and efficient querying.</li>
 </ul>
 
 # Installation
