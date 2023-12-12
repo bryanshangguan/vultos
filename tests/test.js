@@ -4,7 +4,6 @@ const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
 const searchBar = document.getElementById('searchBar');
 
-
 const vultos = new Vultos({
     schema: {
         title: 'string',
@@ -15,6 +14,7 @@ const vultos = new Vultos({
     }
 });
 
+// document.getElementById('loadData').addEventListener('click', init);
 init();
 
 function init() {
@@ -104,6 +104,12 @@ function init() {
     }]);
 
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
+    const searchResults = vultos.search("the great gatsby", {
+        fields: {
+            title: { weight: 5 }
+        }
+    });
+    searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
 }
 
 searchBar.addEventListener('keypress', (e) => {
@@ -112,14 +118,7 @@ searchBar.addEventListener('keypress', (e) => {
         const searchQuery = searchBar.value;
         const searchResults = vultos.search(searchQuery, {
             fields: {
-                title: { weight: 5 },
-                author: { weight: 3 }
-            },
-            where: {
-                isNew: true,
-                year: {
-                    between: [-999, 2000]
-                }
+                title: { weight: 5 }
             }
         });
         searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);

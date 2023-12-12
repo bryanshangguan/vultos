@@ -4,6 +4,7 @@ import { list_2_3, list_4 } from './lists.js';
 export default class Vultos {
     constructor(config) {
         this.schema = config.schema;
+        this.index = new Map();
         this.cache = new Map();
         this.levenshteinCache = new Map();
         this.docs = [];
@@ -17,44 +18,24 @@ export default class Vultos {
     addDoc(doc) {
         if (this.#validateDoc(doc)) {
             this.docs.push(doc);
+            this.#addToIndex(doc);
         } else {
             console.error('Document does not match schema:', doc);
         }
     }
 
     addDocs(docsArray) {
-        for (const doc of docsArray) {
-            if (this.#validateDoc(doc)) {
-                this.docs.push(doc);
-            } else {
-                console.error('Document does not match schema:', doc);
-            }
+        const batchSize = 100;
+        for (let i = 0; i < docsArray.length; i += batchSize) {
+            const batch = docsArray.slice(i, i + batchSize);
+            this.#processBatch(batch);
         }
-    }
-
-    #validateDoc(doc) {
-        for (const key in this.schema) {
-            if (!doc.hasOwnProperty(key) || typeof doc[key] !== this.schema[key]) {
-                return false;
-            }
-        }
-        return true;
     }
 
     search(query, parameters) {
         const startTime = performance.now();
 
-        if (parameters) {
-            const validKeys = ['fields', 'where'];
-            for (const key in parameters) {
-                if (!validKeys.includes(key)) {
-                    console.error(`Unexpected parameter key '${key}'. Expected keys are 'fields' and 'where'`);
-                    return;
-                }
-            }
-
-            this.#setParameters(parameters);
-        }
+        this.#handleParameters(parameters);
 
         try {
             const cacheKey = this.#createCacheKey(query, parameters);
@@ -67,8 +48,16 @@ export default class Vultos {
                 };
             }
 
-            const queryWords = query.toLowerCase().split(/\s+/);
-            let filteredDocs = this.docs;
+            const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
+            let relevantDocs = new Set();
+
+            queryWords.forEach(word => {
+                if (this.index.has(word)) {
+                    this.index.get(word).forEach(doc => relevantDocs.add(doc));
+                }
+            });
+
+            let filteredDocs = Array.from(relevantDocs);
 
             if (parameters && parameters.where) {
                 filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
@@ -102,10 +91,58 @@ export default class Vultos {
                 count: hits.length,
                 hits: hits
             };
-
         } catch (error) {
             console.error(error.message);
             return;
+        }
+    }
+
+    #processBatch(batch) {
+        for (const doc of batch) {
+            if (this.#validateDoc(doc)) {
+                this.docs.push(doc);
+                this.#addToIndex(doc);
+            } else {
+                console.error('Document does not match schema:', doc);
+            }
+        }
+    }
+
+    #addToIndex(doc) {
+        for (const field of this.fields) {
+            if (doc[field.name] !== undefined && this.schema[field.name] === 'string') {
+                const terms = this.#sanitizeText(doc[field.name]).split(/\s+/);
+                terms.forEach(term => {
+                    const stemmedTerm = this.#stemmer(term);
+                    if (!this.index.has(stemmedTerm)) {
+                        this.index.set(stemmedTerm, new Set());
+                    }
+                    this.index.get(stemmedTerm).add(doc);
+                });
+            }
+        }
+    }
+
+    #validateDoc(doc) {
+        for (const key in this.schema) {
+            if (!doc.hasOwnProperty(key) || typeof doc[key] !== this.schema[key]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    #handleParameters(parameters) {
+        if (parameters) {
+            const validKeys = ['fields', 'where'];
+            for (const key in parameters) {
+                if (!validKeys.includes(key)) {
+                    console.error(`Unexpected parameter key '${key}'. Expected keys are 'fields' and 'where'`);
+                    return;
+                }
+            }
+
+            this.#setParameters(parameters);
         }
     }
 
@@ -270,7 +307,7 @@ export default class Vultos {
 
     #sanitizeText(text) {
         if (typeof text === 'string') {
-            return text.replace(/[^\w\s]/gi, '').toLowerCase();
+            return text.toLowerCase().replace(/[^\w\s]/gi, '');
         }
         return text;
     }
