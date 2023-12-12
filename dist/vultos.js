@@ -22,6 +22,16 @@ export default class Vultos {
         }
     }
 
+    addDocs(docsArray) {
+        for (const doc of docsArray) {
+            if (this.#validateDoc(doc)) {
+                this.docs.push(doc);
+            } else {
+                console.error('Document does not match schema:', doc);
+            }
+        }
+    }
+
     #validateDoc(doc) {
         for (const key in this.schema) {
             if (!doc.hasOwnProperty(key) || typeof doc[key] !== this.schema[key]) {
@@ -55,7 +65,7 @@ export default class Vultos {
                     count: cachedResults.length,
                     hits: cachedResults
                 };
-            }            
+            }
 
             const queryWords = query.toLowerCase().split(/\s+/);
             let filteredDocs = this.docs;

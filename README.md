@@ -55,9 +55,25 @@ vultos.addDoc({
     title: 'Example Title',
     author: 'Example Author',
     year: 2000,
-    isNew: false,
-    // other fields...
+    isNew: false
 });
+```
+
+Alternatively you can add multiple docs at the same time.
+
+```js
+vultos.addDocs([{
+        "title": "Title One",
+        "author": "Author One",
+        "year": 1800,
+        "isNew": false,
+    },
+    {
+        "title": "Title Two",
+        "author": "Author Two",
+        "year": 2010,
+        "isNew": true,
+    }]);
 ```
 
 # Searching

@@ -4,8 +4,21 @@ const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
 const searchBar = document.getElementById('searchBar');
 
-const documents = [
-    {
+
+const vultos = new Vultos({
+    schema: {
+        title: 'string',
+        author: 'string',
+        keywords: 'string',
+        isNew: 'boolean',
+        year: 'number'
+    }
+});
+
+init();
+
+function init() {
+    vultos.addDocs([{
         "title": "1984",
         "author": "George Orwell",
         "keywords": "totalitarianism, surveillance, thoughtcrime, doublethink, newspeak, propaganda, rebellion, memory manipulation, oppression, control",
@@ -88,25 +101,7 @@ const documents = [
         "keywords": "aesthetics, morality, hedonism, beauty, youth, corruption, art, duality, vanity, supernatural",
         "isNew": false,
         "year": 1890
-    }
-];
-
-const vultos = new Vultos({
-    schema: {
-        title: 'string',
-        author: 'string',
-        keywords: 'string',
-        isNew: 'boolean',
-        year: 'number'
-    }
-});
-
-init();
-
-function init() {
-    for (let i = 0; i < documents.length; i++) {
-        vultos.addDoc(documents[i]);
-    }
+    }]);
 
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
 }
