@@ -1,4 +1,4 @@
-class Field {
+export default class Field {
     constructor(name) {
         this.name = name;
         this.weight = 0;
@@ -8,5 +8,3 @@ class Field {
         this.weight = weight;
     }
 }
-
-export { Field };

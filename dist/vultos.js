@@ -1,5 +1,6 @@
-import { Field } from './field.js';
-import { list_2_3, list_4 } from './lists.js';
+import Field from './field.js';
+import calculateScore from './score.js';
+import * as textUtils from './textUtils.js';
 
 export default class Vultos {
     constructor(config) {
@@ -34,7 +35,6 @@ export default class Vultos {
 
     search(query, parameters) {
         const startTime = performance.now();
-
         this.#handleParameters(parameters);
 
         try {
@@ -215,101 +215,15 @@ export default class Vultos {
     }
 
     #calculateScore(doc, queryWords) {
-        let score = 0;
-        let maxPossibleScore = 0;
-
-        for (const field of this.fields) {
-            if (doc[field.name] !== undefined) {
-                const fieldType = this.schema[field.name];
-                const fieldContent = doc[field.name];
-                const fieldWeight = field.weight || 1;
-                maxPossibleScore += fieldWeight * 5;
-
-                if (fieldType === 'string') {
-                    const sanitizedFieldContent = this.#sanitizeText(fieldContent);
-                    if (queryWords.length > 1) {
-                        score += this.#calculatePhraseScore(sanitizedFieldContent, queryWords, fieldWeight);
-                    }
-                    score += this.#calculateWordScore(sanitizedFieldContent, queryWords, fieldWeight);
-                } else if (fieldType === 'number') {
-                    score += this.#calculateNumberScore(fieldContent, queryWords, fieldWeight);
-                } else if (fieldType === 'boolean') {
-                    score += this.#calculateBooleanScore(fieldContent, queryWords, fieldWeight);
-                }
-            }
-        }
-
-        return maxPossibleScore > 0 ? Math.min(score / maxPossibleScore, 1) : 0;
-    }
-
-    #calculatePhraseScore(fieldContent, queryWords, fieldWeight) {
-        let score = 0;
-        const fullQuery = this.#sanitizeText(queryWords.join(' '));
-        const someThreshold = 3;
-
-        for (let i = 0; i <= fieldContent.length - fullQuery.length;) {
-            const substring = fieldContent.substring(i, i + fullQuery.length);
-            const distance = this.#levenshteinDistance(fullQuery, substring);
-            if (distance < someThreshold) {
-                score += fieldWeight * 5 / (distance + 1);
-                i += fullQuery.length;
-            } else {
-                i++;
-            }
-        }
-
-        return score;
-    }
-
-    #calculateWordScore(fieldContent, queryWords, fieldWeight) {
-        let score = 0;
-        const sanitizedQueryWords = queryWords.map(word => this.#stemmer(this.#sanitizeText(word)));
-        const fieldContentWords = fieldContent.split(/\s+/).map(word => this.#stemmer(word));
-
-        for (const word of sanitizedQueryWords) {
-            for (const fieldWord of fieldContentWords) {
-                const distance = this.#levenshteinDistance(word, fieldWord);
-                if (distance < 3) {
-                    score += fieldWeight / (distance + 1);
-                }
-            }
-        }
-
-        return score;
-    }
-
-    #calculateNumberScore(fieldContent, queryWords, fieldWeight) {
-        let score = 0;
-        queryWords.forEach(queryWord => {
-            if (!isNaN(queryWord) && Number(queryWord) === fieldContent) {
-                score += fieldWeight;
-            }
-        });
-        return score;
-    }
-
-    #calculateBooleanScore(fieldContent, queryWords, fieldWeight) {
-        let score = 0;
-        const booleanQueryWords = queryWords.map(word => {
-            if (word === 'true') return true;
-            if (word === 'false') return false;
-            return null;
-        });
-
-        booleanQueryWords.forEach(queryWord => {
-            if (queryWord !== null && queryWord === fieldContent) {
-                score += fieldWeight;
-            }
-        });
-
-        return score;
+        return calculateScore(doc, queryWords, this.fields, this.schema, this.#levenshteinDistance.bind(this), this.#sanitizeText.bind(this), this.#stemmer.bind(this));
     }
 
     #sanitizeText(text) {
-        if (typeof text === 'string') {
-            return text.toLowerCase().replace(/[^\w\s]/gi, '');
-        }
-        return text;
+        return textUtils.sanitizeText(text);
+    }
+
+    #stemmer(word) {
+        return textUtils.stemmer(word);
     }
 
     #levenshteinDistance(a, b) {
@@ -318,74 +232,8 @@ export default class Vultos {
             return this.levenshteinCache.get(cacheKey);
         }
 
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) {
-            matrix[i] = [i];
-        }
-        for (let j = 0; j <= a.length; j++) {
-            matrix[0][j] = j;
-        }
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                if (b.charAt(i - 1) === a.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
-                }
-            }
-        }
-
-        const result = matrix[b.length][a.length];
-        this.levenshteinCache.set(cacheKey, result);
-        return result;
-    }
-
-    #stemmer(word) {
-        const reEdIngLy = /(ed|edly|ing|ingly)$/;
-        const reAtBlIz = /(at|bl|iz)$/;
-        const reDoubleConsonant = /([^aeiouylsz])\1$/;
-        const reCvc = /[^aeiou][aeiouy][^aeiouwxy]$/;
-
-        word = word.replace(/(sses|ies)$/, "ss");
-        word = word.replace(/([^s])s$/, "$1");
-
-        if (/(eed|eedly)$/.test(word)) {
-            word = word.replace(/(eed|eedly)$/, "ee");
-        } else if (reEdIngLy.test(word)) {
-            const base = word.replace(reEdIngLy, "");
-            if (reAtBlIz.test(base)) {
-                word = base + "e";
-            } else if (reDoubleConsonant.test(base)) {
-                word = base.slice(0, -1);
-            } else if (reCvc.test(base)) {
-                word = base + "e";
-            } else {
-                word = base;
-            }
-        }
-
-        word = word.replace(/(y|Y)$/, "i");
-
-        const step2and3list = list_2_3;
-        const step4list = list_4;
-
-        for (let [suffix, replacement] of Object.entries(step2and3list)) {
-            if (word.endsWith(suffix)) {
-                word = word.replace(new RegExp(suffix + "$"), replacement);
-                return word;
-            }
-        }
-
-        for (let suffix of step4list) {
-            if (word.endsWith(suffix)) {
-                word = word.replace(new RegExp(suffix + "$"), "");
-                return word;
-            }
-        }
-
-        word = word.replace(/e$/, "");
-        word = word.replace(/(ll)$/, "l");
-
-        return word;
+        const distance = textUtils.levenshteinDistance(a, b);
+        this.levenshteinCache.set(cacheKey, distance);
+        return distance;
     }
 }
