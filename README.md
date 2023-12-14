@@ -17,7 +17,7 @@ npm i vultos
 2. Directly in a browser module (without Node.js):
 
 ```html
-    <script type="module" src="https://unpkg.com/vultos@latest/dist/vultos.js"></script>
+<script type="module" src="https://unpkg.com/vultos@latest/dist/vultos.js"></script>
 ```
 
 # Initialization
