@@ -49,7 +49,7 @@ const vultos = new Vultos({
  - The corresponding data type indicates what kind of value you expect for each field.
  - You can define as many fields as needed to accurately represent your data.
 
-# Adding documents
+# Adding and removing documents
 Once you have your schema defined, you can start adding documents to your Vultos instance. Remember, each document must adhere to the defined schema:
 
 ```js
@@ -82,8 +82,43 @@ vultos.addDocs([{
     }]);
 ```
 
+# Removing documents
+Just like organizing your bookshelf, managing your data sometimes requires removing documents that are no longer needed or relevant. Vultos offers two handy methods for this task:
+ - `removeDoc(document)`: Removes a single document from your Vultos instance.
+ - `removeDocs(documentArray)`: Removes multiple documents from your Vultos instance in one go.
+
+ Important Note: Both methods require an exact match with the document you want to remove. This means the complete content and structure of the document you provide must be identical to the existing one in your Vultos instance for the removal to be successful.
+
+Remember:
+ - Removing a document is permanent and cannot be undone.
+ - Make sure you're confident about removing the desired documents before proceeding.
+
+ ```js
+vultos.removeDoc({
+    title: 'Example Title',
+    author: 'Example Author',
+    year: 2000,
+    isAvailable: false
+});
+```
+
+```js
+vultos.removeDocs([{
+        "title": "Title One",
+        "author": "Author One",
+        "year": 1800,
+        "isAvailable": false,
+    },
+    {
+        "title": "Title Two",
+        "author": "Author Two",
+        "year": 2010,
+        "isAvailable": true,
+    }]);
+```
+
 # Searching
-Searching is as simple calling he search method with a specified query.
+Searching is as simple calling the search method with a specified query.
 
 ```js
 const results = vultos.search('search query');

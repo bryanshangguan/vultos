@@ -2,6 +2,8 @@ import Field from './field.js';
 import calculateScore from './score.js';
 import * as textUtils from './textUtils.js';
 
+const BATCH_SIZE = 100;
+
 export default class Vultos {
     constructor(config) {
         this.schema = config.schema;
@@ -26,10 +28,33 @@ export default class Vultos {
     }
 
     addDocs(docsArray) {
-        const batchSize = 100;
-        for (let i = 0; i < docsArray.length; i += batchSize) {
-            const batch = docsArray.slice(i, i + batchSize);
+        for (let i = 0; i < docsArray.length; i += BATCH_SIZE) {
+            const batch = docsArray.slice(i, i + BATCH_SIZE);
             this.#processBatch(batch);
+        }
+    }
+
+    removeDoc(docToRemove) {
+        console.log("before:", this.docs);
+        this.docs = this.docs.filter(doc => !this.#equals(doc, docToRemove));
+
+        for (const [term, docsSet] of this.index) {
+            for (const doc of Array.from(docsSet)) {
+                if (this.#equals(doc, docToRemove)) {
+                    docsSet.delete(doc);
+                    if (docsSet.size === 0) {
+                        this.index.delete(term);
+                    }
+                }
+            }
+        }
+        console.log("before:", this.docs);
+    }
+
+    removeDocs(docsArray) {
+        for (let i = 0; i < docsArray.length; i += BATCH_SIZE) {
+            const batch = docsArray.slice(i, i + BATCH_SIZE);
+            this.#processRemovalBatch(batch);
         }
     }
 
@@ -97,6 +122,22 @@ export default class Vultos {
         }
     }
 
+    #equals(doc1, doc2) {
+        const doc1Keys = Object.keys(doc1).sort();
+        const doc2Keys = Object.keys(doc2).sort();
+        if (JSON.stringify(doc1Keys) !== JSON.stringify(doc2Keys)) {
+            return false;
+        }
+
+        for (const key of doc1Keys) {
+            if (doc1[key] !== doc2[key]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     #processBatch(batch) {
         for (const doc of batch) {
             if (this.#validateDoc(doc)) {
@@ -130,6 +171,30 @@ export default class Vultos {
             }
         }
         return true;
+    }
+
+    #processRemovalBatch(batch) {
+        for (const docToRemove of batch) {
+            this.#removeDocFromDocsArray(docToRemove);
+            this.#removeDocFromIndex(docToRemove);
+        }
+    }
+
+    #removeDocFromDocsArray(docToRemove) {
+        this.docs = this.docs.filter(doc => !this.#equals(doc, docToRemove));
+    }
+
+    #removeDocFromIndex(docToRemove) {
+        for (const [term, docsSet] of this.index) {
+            for (const doc of Array.from(docsSet)) {
+                if (this.#equals(doc, docToRemove)) {
+                    docsSet.delete(doc);
+                    if (docsSet.size === 0) {
+                        this.index.delete(term);
+                    }
+                }
+            }
+        }
     }
 
     #handleParameters(parameters) {

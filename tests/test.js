@@ -103,6 +103,21 @@ function init() {
         "year": 1890
     }]);
 
+    vultos.removeDocs([{
+        "title": "The Great Gatsby",
+        "author": "F. Scott Fitzgerald",
+        "keywords": "american dream, jazz age, decadence, obsession, wealth, parties, long island, illusion vs reality, moral decay, unrequited love",
+        "isNew": true,
+        "year": 1925
+    },
+    {
+        "title": "Tarzan of the Apes",
+        "author": "Edgar Rice Burroughs",
+        "keywords": "jungle, wilderness, adventure, civilization vs nature, survival, identity, man vs beast, discovery, adaptation, isolation",
+        "isNew": true,
+        "year": 1912
+    }]);
+
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
     const searchResults = vultos.search("the great gatsby", {
         fields: {
