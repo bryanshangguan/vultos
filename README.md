@@ -79,7 +79,7 @@ vultos.addDocs([{
         "author": "Author Two",
         "year": 2010,
         "isAvailable": true,
-    }]);
+}]);
 ```
 
 # Removing documents
@@ -114,7 +114,7 @@ vultos.removeDocs([{
         "author": "Author Two",
         "year": 2010,
         "isAvailable": true,
-    }]);
+}]);
 ```
 
 # Searching
