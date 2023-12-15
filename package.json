@@ -10,7 +10,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "full-text search",
+    "search",
+    "fuzzy search",
+    "typo-tolerant search",
+    "full-text",
+    "cuztomizable search"
+  ],
   "author": "bryanshangguan",
   "license": "MIT",
   "repository": {
