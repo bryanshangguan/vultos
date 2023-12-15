@@ -221,22 +221,20 @@ export default class Vultos {
             const expectedType = this.schema[key];
             const validConditionKeys = ['before', 'after', 'between'];
 
-            // Check for unrecognized condition keys
             if (typeof condition === 'object' && condition !== null) {
                 for (const conditionKey in condition) {
                     if (!validConditionKeys.includes(conditionKey)) {
                         console.warn(`Unrecognized condition '${conditionKey}' on field '${key}'`);
-                        return []; // Return an empty array or handle as needed
+                        return [];
                     }
                 }
             }
 
-            // Type checking and warnings for numeric and boolean conditions
             if (expectedType === 'number') {
-                // ... (numeric type checks as previously implemented)
+
             } else if (expectedType === 'boolean' && typeof condition !== 'boolean') {
                 console.warn(`Expected a boolean for condition on field '${key}', but got ${typeof condition}`);
-                return []; // Return an empty array or handle as needed
+                return [];
             }
         }
 
@@ -245,7 +243,6 @@ export default class Vultos {
                 const condition = whereClause[key];
                 const docValue = doc[key];
 
-                // Handle 'before', 'after', 'between', and boolean conditions
                 if (typeof condition === 'object' && condition !== null) {
                     if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
                         const [min, max] = condition.between;
