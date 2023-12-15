@@ -21,16 +21,16 @@ npm i vultos
 ```
 
 # Initialization
-#### Defining Your Data Structure: Initialization with Schema
+### Defining Your Data Structure: Initialization with Schema
 Vultos thrives on understanding your data, and that starts with the schema you define during initialization. The schema tells Vultos what kind of information to expect in your documents, allowing it to efficiently store, search, and retrieve relevant data for your needs.
 
-#### Supported Data Types:
+### Supported Data Types:
 Currently, Vultos supports three basic data types for your document fields:
  - String: Text information like titles, descriptions, or names.
  - Number: Numeric values like years, counts, or measurements.
  - Boolean: True or false values for binary states like availability or completion.
 
-#### Example Schema:
+### Example Schema:
 
 ```js
 const vultos = new Vultos({
@@ -44,7 +44,7 @@ const vultos = new Vultos({
 });
 ```
 
-#### In this schema:
+### In this schema:
  - Each field name, like title or year, becomes a key in your documents.
  - The corresponding data type indicates what kind of value you expect for each field.
  - You can define as many fields as needed to accurately represent your data.
@@ -64,7 +64,7 @@ Important Note:
 
 Adding fields to your documents that weren't defined in the schema will result in validation errors. Ensure your data structure and schema align for smooth operation.
 
-#### Adding multiple documents
+### Adding multiple documents
 Alternatively you can add multiple docs at the same time. Remember, each and every document added to your Vultos instance must adhere to the predefined schema.
 
 ```js
@@ -136,25 +136,44 @@ const searchResults = vultos.search('search query', {
 });
 ```
 
-#### Where clause
-Need to narrow your search further? The `where` clause lets you define specific conditions for the data you're looking for.
+### Where clause
+Need to narrow your search further? The `where` clause lets you define specific conditions for the data you're looking for. It supports various types of comparisons across numeric, boolean, and date fields.
 
-The `where` clause supports conditions on boolean fields and range queries on numeric fields. For example:
-
-```js
-const searchResults = vultos.search('historical fiction', {
-  where: {
-    year: { between: [1700, 1900] },
-    isAvailable: true
-  }
-});
-```
-
-This example tells your explorers to only bring back documents:
-
- - Where "historical fiction" appears in relevant fields.
- - Published between 1700 and 1900 (inclusive).
- - Currently available for borrowing (if your schema has an `isAvailable` field).
+Numeric Range Queries:
+ - `between`: This keyword is used to find documents where a numeric field falls within a specific range (inclusive).
+    ```js
+    const searchResults = vultos.search('historical fiction', {
+      where: {
+        year: { between: [1700, 1900] },
+      }
+    });
+    ```
+ - `before`: This keyword finds documents where a numeric field is less than a specific value.
+    ```js
+    const searchResults = vultos.search('old novels', {
+      where: {
+        year: { before: 1960 },
+      }
+    });
+    ```
+ - `after`: This keyword finds documents where a numeric field is greater than a specific value.
+  
+    ```js
+    const searchResults = vultos.search('upcoming releases', {
+      where: {
+        publicationDate: { after: 2023 },
+      }
+    });
+    ```
+Boolean Comparisons:
+  - You can use simple true and false values to match or exclude documents based on boolean fields.
+    ```js
+    const searchResults = vultos.search('available books', {
+      where: {
+        isAvailable: true,
+      }
+    });
+    ```
 
 # Search results
 This section explains the format of the search results returned by Vultos, helping you understand the information provided for each hit.
