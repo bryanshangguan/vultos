@@ -175,6 +175,27 @@ Boolean Comparisons:
     });
     ```
 
+### Sorting results
+ - Sorting Capability: With the `sortBy` method, users can now sort their search results alphabetically based on a specified string field.
+ - Field Restriction: The `sortBy` function is designed to work with fields that are designated as strings in the schema.
+
+After performing a search, users can chain the `sortBy` method to their search query. The method takes a string field name as an argument.
+
+```js
+const searchResults = vultos.search('search query', {
+    fields: {
+        title: { weight: 5 },
+        author: { weight: 1 }
+    },
+    where: {
+        year: { after: 1900 }
+    }
+}).sortBy("title");
+```
+Important considerations:
+ - Field Validation: `sortBy` only accepts fields that are designated as strings in the Vultos schema.
+ - Error Handling: Attempting to sort by a non-string field or a field not present in the schema will result in an error.
+
 # Search results
 This section explains the format of the search results returned by Vultos, helping you understand the information provided for each hit.
  - `elapsed`: This field holds the time taken to complete the search in milliseconds. It can be valuable for gauging performance and optimizing your queries.

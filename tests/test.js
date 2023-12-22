@@ -104,16 +104,6 @@ function init() {
     }]);
 
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
-    const searchResults = vultos.search("the great gatsby", {
-        fields: {
-            title: { weight: 5 },
-            author: { weight: 1 }
-        },
-        where: {
-            year: { after: 1000 }
-        }
-    });
-    searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
 }
 
 searchBar.addEventListener('keypress', (e) => {
@@ -124,11 +114,8 @@ searchBar.addEventListener('keypress', (e) => {
             fields: {
                 title: { weight: 5 },
                 author: { weight: 1 }
-            },
-            where: {
-                year: { after: 1900 }
             }
-        });
+        }).sortBy("title");
         searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
     }
 });

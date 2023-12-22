@@ -111,15 +111,26 @@ export default class Vultos {
 
             const endTime = performance.now();
 
-            return {
+            const searchResults = {
                 elapsed: endTime - startTime,
                 count: hits.length,
-                hits: hits
+                hits: hits,
+                sortBy: (fieldName) => this.#sortByField(searchResults.hits, fieldName)
             };
+        
+            return searchResults;
         } catch (error) {
             console.error(error.message);
             return;
         }
+    }
+
+    #sortByField(results, fieldName) {
+        if (!this.schema.hasOwnProperty(fieldName) || this.schema[fieldName] !== 'string') {
+            throw new Error(`Invalid field '${fieldName}'. Only string fields can be sorted.`);
+        }
+    
+        return results.sort((a, b) => a.document[fieldName].localeCompare(b.document[fieldName]));
     }
 
     #equals(doc1, doc2) {
