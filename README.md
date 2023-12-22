@@ -165,6 +165,15 @@ Numeric Range Queries:
       }
     });
     ```
+ - `eq`: This keyword finds documents where a numeric field is equal to a specific value.
+  
+    ```js
+    const searchResults = vultos.search('upcoming releases', {
+      where: {
+        publicationDate: { eq: 2020 },
+      }
+    });
+    ```
 Boolean Comparisons:
   - You can use simple true and false values to match or exclude documents based on boolean fields.
     ```js
