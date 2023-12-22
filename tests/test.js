@@ -114,6 +114,9 @@ searchBar.addEventListener('keypress', (e) => {
             fields: {
                 title: { weight: 5 },
                 author: { weight: 1 }
+            }, 
+            where: {
+                year: { gt: 1800 }
             }
         }).sortBy("title");
         searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);

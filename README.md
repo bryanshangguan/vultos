@@ -140,28 +140,28 @@ const searchResults = vultos.search('search query', {
 Need to narrow your search further? The `where` clause lets you define specific conditions for the data you're looking for. It supports various types of comparisons across numeric, boolean, and date fields.
 
 Numeric Range Queries:
- - `between`: This keyword is used to find documents where a numeric field falls within a specific range (inclusive).
+ - `bt`: This keyword is used to find documents where a numeric field falls within a specific range (inclusive).
     ```js
     const searchResults = vultos.search('historical fiction', {
       where: {
-        year: { between: [1700, 1900] },
+        year: { bt: [1700, 1900] },
       }
     });
     ```
- - `before`: This keyword finds documents where a numeric field is less than a specific value.
+ - `lt`: This keyword finds documents where a numeric field is less than a specific value.
     ```js
     const searchResults = vultos.search('old novels', {
       where: {
-        year: { before: 1960 },
+        year: { lt: 1960 },
       }
     });
     ```
- - `after`: This keyword finds documents where a numeric field is greater than a specific value.
+ - `gt`: This keyword finds documents where a numeric field is greater than a specific value.
   
     ```js
     const searchResults = vultos.search('upcoming releases', {
       where: {
-        publicationDate: { after: 2023 },
+        publicationDate: { gt: 2023 },
       }
     });
     ```
@@ -188,7 +188,7 @@ const searchResults = vultos.search('search query', {
         author: { weight: 1 }
     },
     where: {
-        year: { after: 1900 }
+        year: { gt: 1900 }
     }
 }).sortBy("title");
 ```

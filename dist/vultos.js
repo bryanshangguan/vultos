@@ -227,46 +227,54 @@ export default class Vultos {
             if (!this.schema.hasOwnProperty(key)) {
                 throw new Error(`Field '${key}' does not exist in the schema`);
             }
-
+    
             const condition = whereClause[key];
             const expectedType = this.schema[key];
-            const validConditionKeys = ['before', 'after', 'between'];
-
+            const validConditionKeys = ['lessthan', 'lt', 'greaterthan', 'gt', 'between', 'bt', 'equal', 'eq'];
+    
             if (typeof condition === 'object' && condition !== null) {
                 for (const conditionKey in condition) {
                     if (!validConditionKeys.includes(conditionKey)) {
                         console.warn(`Unrecognized condition '${conditionKey}' on field '${key}'`);
                         return [];
                     }
+    
+                    if (conditionKey === 'lt') {
+                        condition.lessthan = condition.lt;
+                    } else if (conditionKey === 'gt') {
+                        condition.greaterthan = condition.gt;
+                    } else if (conditionKey === 'eq') {
+                        condition.equal = condition.eq;
+                    } else if (conditionKey === 'bt') {
+                        condition.between = condition.bt;
+                    }
                 }
             }
-
+    
             if (expectedType === 'number') {
-
+                if (condition.equal !== undefined && typeof condition.equal === 'number') {
+                    docs = docs.filter(doc => doc[key] === condition.equal);
+                }
             } else if (expectedType === 'boolean' && typeof condition !== 'boolean') {
                 console.warn(`Expected a boolean for condition on field '${key}', but got ${typeof condition}`);
                 return [];
             }
         }
-
+    
         return docs.filter(doc => {
             for (const key in whereClause) {
                 const condition = whereClause[key];
                 const docValue = doc[key];
-
+    
                 if (typeof condition === 'object' && condition !== null) {
                     if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
                         const [min, max] = condition.between;
                         if (docValue < min || docValue > max) {
                             return false;
                         }
-                    } else if (condition.before && docValue >= condition.before) {
+                    } else if (condition.lessthan && docValue >= condition.lessthan) {
                         return false;
-                    } else if (condition.after && docValue <= condition.after) {
-                        return false;
-                    }
-                } else {
-                    if (docValue !== condition) {
+                    } else if (condition.greaterthan && docValue <= condition.greaterthan) {
                         return false;
                     }
                 }
