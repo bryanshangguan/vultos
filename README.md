@@ -3,6 +3,7 @@
  - Boolean and numeric range queries.
  - Extensible schema definition for varied data types.
  - Performance optimizations with indexing, caching and efficient querying.
+ - Strict configuration validation to match with schema.
 
 # Installation
 There are two ways to install Vultos and start using it in your project:
