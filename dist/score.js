@@ -1,4 +1,8 @@
-export default function calculateScore(doc, queryWords, fields, schema, levenshteinDistance, sanitizeText, stemmer) {
+import * as textUtils from './textUtils.js';
+
+const LEVENSHTEIN_DISTANCE = 3;
+
+export default function calculateScore(doc, queryWords, fields, schema, levenshteinDistance) {
     let score = 0;
     let maxPossibleScore = 0;
 
@@ -10,11 +14,11 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
             maxPossibleScore += fieldWeight * 5;
 
             if (fieldType === 'string') {
-                const sanitizedFieldContent = sanitizeText(fieldContent);
+                const sanitizedFieldContent = textUtils.sanitizeText(fieldContent);
                 if (queryWords.length > 1) {
-                    score += calculatePhraseScore(sanitizedFieldContent, queryWords, fieldWeight, levenshteinDistance, sanitizeText);
+                    score += calculatePhraseScore(sanitizedFieldContent, queryWords, fieldWeight, levenshteinDistance);
                 }
-                score += calculateWordScore(sanitizedFieldContent, queryWords, fieldWeight, levenshteinDistance, stemmer, sanitizeText);
+                score += calculateWordScore(sanitizedFieldContent, queryWords, fieldWeight, levenshteinDistance);
             } else if (fieldType === 'number') {
                 score += calculateNumberScore(fieldContent, queryWords, fieldWeight);
             } else if (fieldType === 'boolean') {
@@ -26,15 +30,14 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
     return maxPossibleScore > 0 ? Math.min(score / maxPossibleScore, 1) : 0;
 }
 
-function calculatePhraseScore(fieldContent, queryWords, fieldWeight, levenshteinDistance, sanitizeText) {
+function calculatePhraseScore(fieldContent, queryWords, fieldWeight, levenshteinDistance) {
     let score = 0;
-    const fullQuery = sanitizeText(queryWords.join(' '));
-    const someThreshold = 3;
+    const fullQuery = textUtils.sanitizeText(queryWords.join(' '));
 
     for (let i = 0; i <= fieldContent.length - fullQuery.length;) {
         const substring = fieldContent.substring(i, i + fullQuery.length);
         const distance = levenshteinDistance(fullQuery, substring);
-        if (distance < someThreshold) {
+        if (distance < LEVENSHTEIN_DISTANCE) {
             score += fieldWeight * 5 / (distance + 1);
             i += fullQuery.length;
         } else {
@@ -45,15 +48,15 @@ function calculatePhraseScore(fieldContent, queryWords, fieldWeight, levenshtein
     return score;
 }
 
-function calculateWordScore(fieldContent, queryWords, fieldWeight, levenshteinDistance, stemmer, sanitizeText) {
+function calculateWordScore(fieldContent, queryWords, fieldWeight, levenshteinDistance) {
     let score = 0;
-    const sanitizedQueryWords = queryWords.map(word => stemmer(sanitizeText(word)));
-    const fieldContentWords = fieldContent.split(/\s+/).map(word => stemmer(word));
+    const sanitizedQueryWords = queryWords.map(word => textUtils.stemmer(textUtils.sanitizeText(word)));
+    const fieldContentWords = fieldContent.split(/\s+/).map(word => textUtils.stemmer(word));
 
     for (const word of sanitizedQueryWords) {
         for (const fieldWord of fieldContentWords) {
             const distance = levenshteinDistance(word, fieldWord);
-            if (distance < 3) {
+            if (distance < LEVENSHTEIN_DISTANCE) {
                 score += fieldWeight / (distance + 1);
             }
         }

@@ -1,6 +1,6 @@
 {
   "name": "vultos",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "type": "module",
   "description": "Light configurable full-text fuzzy search library that runs directly in the browser.",
   "main": "dist/vultos.js",

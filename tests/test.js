@@ -14,7 +14,6 @@ const vultos = new Vultos({
     }
 });
 
-// document.getElementById('loadData').addEventListener('click', init);
 init();
 
 function init() {
@@ -108,17 +107,13 @@ function init() {
 
 searchBar.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        console.clear();
         const searchQuery = searchBar.value;
         const searchResults = vultos.search(searchQuery, {
             fields: {
-                title: { weight: 5 },
+                title: { weight: 1 },
                 author: { weight: 1 }
-            }, 
-            where: {
-                year: { gt: 1800 }
-            }
-        }).sortBy("title");
+            }, hi: { gt: 0.1 }
+        });
         searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
     }
 });

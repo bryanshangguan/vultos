@@ -184,6 +184,23 @@ Boolean Comparisons:
     });
     ```
 
+### Filtering results by score
+The capability to refine search results through scoring metrics is an integral feature of our system. Each document within the database is assigned a score, which can be utilized for filtering purposes. This scoring mechanism leverages the same set of keywords as those employed in the `where` clause. The `score` attribute is specifically designed to allow users to customize their search criteria according to their requirements.
+
+The following example illustrates the implementation of this feature:
+
+```js
+const searchResults = vultos.search(searchQuery, {
+    fields: {
+        title: { weight: 1 },
+        author: { weight: 1 }
+    }, score: { gt: 0.1 }
+});
+```
+Remember:
+ - Each document is assigned a score within a predefined range, with the minimum being 0 and the maximum being 1.
+ - The score field is configured to accept numerical values exclusively within the range of 0 to 1 (non-inclusive).
+
 ### Sorting results
  - Sorting Capability: With the `sortBy` method, users can now sort their search results alphabetically based on a specified string field.
  - Field Restriction: The `sortBy` function is designed to work with fields that are designated as strings in the schema.
@@ -201,6 +218,7 @@ const searchResults = vultos.search('search query', {
     }
 }).sortBy("title");
 ```
+
 Important considerations:
  - Field Validation: `sortBy` only accepts fields that are designated as strings in the Vultos schema.
  - Error Handling: Attempting to sort by a non-string field or a field not present in the schema will result in an error.

@@ -3,9 +3,14 @@ import calculateScore from './score.js';
 import * as textUtils from './textUtils.js';
 
 const BATCH_SIZE = 100;
+const LEVENSHTEIN_DISTANCE = 3;
 
 export default class Vultos {
     constructor(config) {
+        const configKeys = Object.keys(config);
+        if (configKeys.length !== 1 || !config.hasOwnProperty('schema')) {
+            throw new Error('Invalid configuration: Expected only a "schema" property.');
+        }
         this.schema = config.schema;
         this.index = new Map();
         this.cache = new Map();
@@ -23,7 +28,7 @@ export default class Vultos {
             this.docs.push(doc);
             this.#addToIndex(doc);
         } else {
-            console.error('Document does not match schema:', doc);
+            throw new Error('Document does not match schema:', doc);
         }
     }
 
@@ -35,7 +40,6 @@ export default class Vultos {
     }
 
     removeDoc(docToRemove) {
-        console.log("before:", this.docs);
         this.docs = this.docs.filter(doc => !this.#equals(doc, docToRemove));
 
         for (const [term, docsSet] of this.index) {
@@ -48,7 +52,6 @@ export default class Vultos {
                 }
             }
         }
-        console.log("before:", this.docs);
     }
 
     removeDocs(docsArray) {
@@ -69,17 +72,20 @@ export default class Vultos {
                 return {
                     elapsed: performance.now() - startTime,
                     count: cachedResults.length,
-                    hits: cachedResults
+                    hits: this.filterHitsByScore(cachedResults, parameters.score)
                 };
             }
 
             const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
             let relevantDocs = new Set();
 
-            queryWords.forEach(word => {
-                if (this.index.has(word)) {
-                    this.index.get(word).forEach(doc => relevantDocs.add(doc));
-                }
+            queryWords.forEach(queryWord => {
+                this.index.forEach((docsSet, indexedWord) => {
+                    const distance = this.#levenshteinDistance(queryWord, indexedWord);
+                    if (distance < LEVENSHTEIN_DISTANCE) {
+                        docsSet.forEach(doc => relevantDocs.add(doc));
+                    }
+                });
             });
 
             let filteredDocs = Array.from(relevantDocs);
@@ -97,7 +103,8 @@ export default class Vultos {
                 .sort((a, b) => b.score - a.score);
 
             let uniqueDocs = new Set();
-            const hits = [];
+
+            let hits = [];
 
             for (const item of scoredDocs) {
                 const docStr = JSON.stringify(item.doc);
@@ -109,19 +116,18 @@ export default class Vultos {
 
             this.cache.set(cacheKey, hits);
 
+            hits = this.filterHitsByScore(hits, parameters.score);
+
             const endTime = performance.now();
 
-            const searchResults = {
+            return {
                 elapsed: endTime - startTime,
                 count: hits.length,
                 hits: hits,
-                sortBy: (fieldName) => this.#sortByField(searchResults.hits, fieldName)
+                sortBy: (fieldName) => this.#sortByField(hits, fieldName)
             };
-        
-            return searchResults;
         } catch (error) {
-            console.error(error.message);
-            return;
+            throw new Error(error.message);
         }
     }
 
@@ -129,7 +135,7 @@ export default class Vultos {
         if (!this.schema.hasOwnProperty(fieldName) || this.schema[fieldName] !== 'string') {
             throw new Error(`Invalid field '${fieldName}'. Only string fields can be sorted.`);
         }
-    
+
         return results.sort((a, b) => a.document[fieldName].localeCompare(b.document[fieldName]));
     }
 
@@ -155,7 +161,7 @@ export default class Vultos {
                 this.docs.push(doc);
                 this.#addToIndex(doc);
             } else {
-                console.error('Document does not match schema:', doc);
+                throw new Error('Document does not match schema:', doc);
             }
         }
     }
@@ -210,11 +216,18 @@ export default class Vultos {
 
     #handleParameters(parameters) {
         if (parameters) {
-            const validKeys = ['fields', 'where'];
+            const validKeys = ['fields', 'where', 'score'];
             for (const key in parameters) {
                 if (!validKeys.includes(key)) {
-                    console.error(`Unexpected parameter key '${key}'. Expected keys are 'fields' and 'where'`);
-                    return;
+                    throw new Error(`Unexpected parameter key '${key}'. Expected keys are 'fields', 'where', and 'score'`);
+                }
+            }
+
+            if (parameters.fields) {
+                for (const fieldName in parameters.fields) {
+                    if (!this.schema.hasOwnProperty(fieldName)) {
+                        throw new Error(`Field '${fieldName}' is not in the schema.`);
+                    }
                 }
             }
 
@@ -227,18 +240,17 @@ export default class Vultos {
             if (!this.schema.hasOwnProperty(key)) {
                 throw new Error(`Field '${key}' does not exist in the schema`);
             }
-    
+
             const condition = whereClause[key];
             const expectedType = this.schema[key];
             const validConditionKeys = ['lessthan', 'lt', 'greaterthan', 'gt', 'between', 'bt', 'equal', 'eq'];
-    
+
             if (typeof condition === 'object' && condition !== null) {
                 for (const conditionKey in condition) {
                     if (!validConditionKeys.includes(conditionKey)) {
-                        console.warn(`Unrecognized condition '${conditionKey}' on field '${key}'`);
-                        return [];
+                        throw new Error(`Unrecognized condition '${conditionKey}' on field '${key}'`);
                     }
-    
+
                     if (conditionKey === 'lt') {
                         condition.lessthan = condition.lt;
                     } else if (conditionKey === 'gt') {
@@ -250,22 +262,21 @@ export default class Vultos {
                     }
                 }
             }
-    
+
             if (expectedType === 'number') {
                 if (condition.equal !== undefined && typeof condition.equal === 'number') {
                     docs = docs.filter(doc => doc[key] === condition.equal);
                 }
             } else if (expectedType === 'boolean' && typeof condition !== 'boolean') {
-                console.warn(`Expected a boolean for condition on field '${key}', but got ${typeof condition}`);
-                return [];
+                throw new Error(`Expected a boolean for condition on field '${key}', but got ${typeof condition}`);
             }
         }
-    
+
         return docs.filter(doc => {
             for (const key in whereClause) {
                 const condition = whereClause[key];
                 const docValue = doc[key];
-    
+
                 if (typeof condition === 'object' && condition !== null) {
                     if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
                         const [min, max] = condition.between;
@@ -283,6 +294,35 @@ export default class Vultos {
         });
     }
 
+    filterHitsByScore(hits, scoreConditions) {
+        if (!scoreConditions) return hits;
+
+        const validScoreKeys = ['gt', 'lt', 'eq'];
+        for (const key in scoreConditions) {
+            if (!validScoreKeys.includes(key)) {
+                throw new Error(`Invalid score condition '${key}'. Expected conditions are 'gt', 'lt', and 'eq'`);
+            }
+
+            const score = scoreConditions[key];
+            if (score <= 0 || score >= 1) {
+                throw new Error(`Invalid score value '${score}'. Score must be between 0 and 1.`);
+            }
+        }
+
+        return hits.filter(hit => {
+            if (scoreConditions.gt !== undefined && hit.score <= scoreConditions.gt) {
+                return false;
+            }
+            if (scoreConditions.lt !== undefined && hit.score >= scoreConditions.lt) {
+                return false;
+            }
+            if (scoreConditions.eq !== undefined && hit.score !== scoreConditions.eq) {
+                return false;
+            }
+            return true;
+        });
+    }
+
     #createCacheKey(query, parameters) {
         return JSON.stringify({ query, parameters });
     }
@@ -290,6 +330,10 @@ export default class Vultos {
     #setParameters(parameters) {
         if (parameters && parameters.fields) {
             for (const fieldName in parameters.fields) {
+                if (!this.schema.hasOwnProperty(fieldName)) {
+                    throw new Error(`Field '${fieldName}' is not in the schema.`);
+                }
+
                 const fieldParams = parameters.fields[fieldName];
                 const field = this.fields.find(f => f.name === fieldName);
                 if (field && fieldParams.weight !== undefined) {
@@ -308,7 +352,7 @@ export default class Vultos {
     }
 
     #calculateScore(doc, queryWords) {
-        return calculateScore(doc, queryWords, this.fields, this.schema, this.#levenshteinDistance.bind(this), this.#sanitizeText.bind(this), this.#stemmer.bind(this));
+        return calculateScore(doc, queryWords, this.fields, this.schema, this.#levenshteinDistance.bind(this));
     }
 
     #sanitizeText(text) {
