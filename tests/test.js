@@ -102,17 +102,47 @@ function init() {
         "year": 1890
     }]);
 
+    // vultos.removeDocs({
+    //     where: {
+    //         keywords: { inc: "youth" },
+    //         year: { lt: 1900 }
+    //     }
+    // });
+
+    const searchResults = vultos.search("the great", {
+        fields: {
+            title: { weight: 1 },
+            author: { weight: 1 }
+        }, where: {
+            year: { eq: 1925 },
+            keywords: { inc: "" }
+        }
+    });
+
+    searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
+
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
 }
 
 searchBar.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const searchQuery = searchBar.value;
+
+        // vultos.removeDocs({
+        //     where: {
+        //         keywords: { inc: "youth" },
+        //         year: { lt: 1900 }
+        //     }
+        // });
+
         const searchResults = vultos.search(searchQuery, {
             fields: {
                 title: { weight: 1 },
                 author: { weight: 1 }
-            }, hi: { gt: 0.1 }
+            }, where: {
+                year: { lt: 2000 },
+                keywords: { inc: "" }
+            }
         });
         searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
     }

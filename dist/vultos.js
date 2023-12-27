@@ -91,6 +91,7 @@ export default class Vultos {
             let filteredDocs = Array.from(relevantDocs);
 
             if (parameters && parameters.where) {
+                console.log("filteredDocs:", filteredDocs);
                 filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
             }
 
@@ -243,29 +244,26 @@ export default class Vultos {
 
             const condition = whereClause[key];
             const expectedType = this.schema[key];
-            const validConditionKeys = ['lessthan', 'lt', 'greaterthan', 'gt', 'between', 'bt', 'equal', 'eq'];
+            const validConditionKeys = ['lt', 'lte', 'gt', 'gte', 'bt', 'eq', 'inc'];
 
             if (typeof condition === 'object' && condition !== null) {
                 for (const conditionKey in condition) {
                     if (!validConditionKeys.includes(conditionKey)) {
                         throw new Error(`Unrecognized condition '${conditionKey}' on field '${key}'`);
                     }
-
-                    if (conditionKey === 'lt') {
-                        condition.lessthan = condition.lt;
-                    } else if (conditionKey === 'gt') {
-                        condition.greaterthan = condition.gt;
-                    } else if (conditionKey === 'eq') {
-                        condition.equal = condition.eq;
-                    } else if (conditionKey === 'bt') {
-                        condition.between = condition.bt;
-                    }
                 }
             }
 
             if (expectedType === 'number') {
-                if (condition.equal !== undefined && typeof condition.equal === 'number') {
-                    docs = docs.filter(doc => doc[key] === condition.equal);
+                if (condition.eq !== undefined && typeof condition.eq === 'number') {
+                    docs = docs.filter(doc => doc[key] === condition.eq);
+                }
+            } else if (expectedType === 'string') {
+                if (condition.eq !== undefined && typeof condition.eq === 'string') {
+                    docs = docs.filter(doc => doc[key] === condition.eq);
+                }
+                if (condition.inc !== undefined && typeof condition.inc === 'string') {
+                    docs = docs.filter(doc => doc[key].includes(condition.inc));
                 }
             } else if (expectedType === 'boolean' && typeof condition !== 'boolean') {
                 throw new Error(`Expected a boolean for condition on field '${key}', but got ${typeof condition}`);
@@ -278,14 +276,18 @@ export default class Vultos {
                 const docValue = doc[key];
 
                 if (typeof condition === 'object' && condition !== null) {
-                    if (condition.between && Array.isArray(condition.between) && condition.between.length === 2) {
-                        const [min, max] = condition.between;
+                    if (condition.bt && Array.isArray(condition.bt) && condition.bt.length === 2) {
+                        const [min, max] = condition.bt;
                         if (docValue < min || docValue > max) {
                             return false;
                         }
-                    } else if (condition.lessthan && docValue >= condition.lessthan) {
+                    } else if (condition.lt && docValue >= condition.lt) {
                         return false;
-                    } else if (condition.greaterthan && docValue <= condition.greaterthan) {
+                    } else if (condition.lte && docValue > condition.lte) {
+                        return false;
+                    } else if (condition.gt && docValue <= condition.gt) {
+                        return false;
+                    } else if (condition.gte && docValue < condition.gte) {
                         return false;
                     }
                 }
