@@ -118,6 +118,28 @@ vultos.removeDocs([{
 }]);
 ```
 
+### Removing documents conditionally
+Sometimes you want to remove documents conditionally, based on a certain condition. For example, you might want to remove all books that are not available. This can be done by using the `where` clause in the `removeDocs` method. Currently, the `where` clause here only accepts one field at a time. 
+
+```js
+vultos.removeDocs({
+    where: {
+        keywords: { inc: "roman" }
+    }
+});
+```
+In this example, all documents that have the keyword "roman" in their keywords will be removed. As of the latest release, the `where` clause supports the following comparison operators: 
+String:
+ - `eq`: Matches documents where the field value is equal to the provided value.
+ - `inc`: Matches documents where the field value contains the provided value.
+
+Numbers:
+ - `eq`: Matches documents where the field value is equal to the provided value.
+ - `gt`: Matches documents where the field value is greater than the provided value.
+ - `gte`: Matches documents where the field value is greater than or equal to the provided value.
+ - `lt`: Matches documents where the field value is less than the provided value.
+ - `lte`: Matches documents where the field value is less than or equal to the provided value.
+
 # Searching
 Searching is as simple calling the search method with a specified query.
 
@@ -184,6 +206,18 @@ Boolean Comparisons:
       }
     });
     ```
+### Ignoring certain fields
+Sometimes when searching, certain fields seem irrelevant to the search query. In such cases, you can ignore certain fields by specifying them in the `ignore` array. This does not remove the field from the documents or the schema but rather does not consider them when calculating the score for each document. 
+
+```js
+const searchResults = vultos.search(searchQuery, {
+    fields: {
+        title: { weight: 5 }
+    },
+    ignore: ["year", "keywords"]
+});
+```
+Remember: the `ignore` keyword must contain an array with the fields you want to ignore.
 
 ### Filtering results by score
 The capability to refine search results through scoring metrics is an integral feature of our system. Each document within the database is assigned a score, which can be utilized for filtering purposes. This scoring mechanism leverages the same set of keywords as those employed in the `where` clause. The `score` attribute is specifically designed to allow users to customize their search criteria according to their requirements.

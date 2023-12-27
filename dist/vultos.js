@@ -54,14 +54,36 @@ export default class Vultos {
         }
     }
 
-    removeDocs(docsArray) {
-        for (let i = 0; i < docsArray.length; i += BATCH_SIZE) {
-            const batch = docsArray.slice(i, i + BATCH_SIZE);
+    removeDocs(arg) {
+        if (!arg) {
+            throw new Error('No argument provided. Please provide an array of documents or a where clause.');
+        }
+
+        let documentsToRemove = [];
+
+        if (Array.isArray(arg)) {
+            documentsToRemove = arg;
+        } else if (typeof arg === 'object' && arg.where) {
+            documentsToRemove = this.#applyWhereClause(this.docs, arg.where);
+        } else {
+            throw new Error('Invalid argument. Please provide either an array of documents or a where clause object.');
+        }
+
+        if (documentsToRemove.length === 0) {
+            return;
+        }
+
+        console.log("Removing", documentsToRemove.length, "documents");
+
+        for (let i = 0; i < documentsToRemove.length; i += BATCH_SIZE) {
+            const batch = documentsToRemove.slice(i, i + BATCH_SIZE);
             this.#processRemovalBatch(batch);
         }
+
+        return documentsToRemove.length;
     }
 
-    search(query, parameters) {
+    search(query, parameters = {}) {
         const startTime = performance.now();
         this.#handleParameters(parameters);
 
@@ -91,12 +113,11 @@ export default class Vultos {
             let filteredDocs = Array.from(relevantDocs);
 
             if (parameters && parameters.where) {
-                console.log("filteredDocs:", filteredDocs);
                 filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
             }
 
             let scoredDocs = filteredDocs.map(doc => {
-                let score = this.#calculateScore(doc, queryWords);
+                let score = this.#calculateScore(doc, queryWords, parameters.ignore || []);
                 return { doc, score };
             });
 
@@ -217,10 +238,10 @@ export default class Vultos {
 
     #handleParameters(parameters) {
         if (parameters) {
-            const validKeys = ['fields', 'where', 'score'];
+            const validKeys = ['fields', 'where', 'score', 'ignore'];
             for (const key in parameters) {
                 if (!validKeys.includes(key)) {
-                    throw new Error(`Unexpected parameter key '${key}'. Expected keys are 'fields', 'where', and 'score'`);
+                    throw new Error(`Unexpected parameter key '${key}'. Expected keys are ${validKeys.join(', ')}`);
                 }
             }
 
@@ -230,6 +251,10 @@ export default class Vultos {
                         throw new Error(`Field '${fieldName}' is not in the schema.`);
                     }
                 }
+            }
+
+            if (parameters.ignore && !Array.isArray(parameters.ignore)) {
+                throw new Error(`'ignore' parameter must be an array of field names.`);
             }
 
             this.#setParameters(parameters);
@@ -353,8 +378,13 @@ export default class Vultos {
         }
     }
 
-    #calculateScore(doc, queryWords) {
-        return calculateScore(doc, queryWords, this.fields, this.schema, this.#levenshteinDistance.bind(this));
+    #calculateScore(doc, queryWords, ignoreFields = []) {
+        if (ignoreFields && Array.isArray(ignoreFields)) {
+            const filteredFields = this.fields.filter(field => !ignoreFields.includes(field.name));
+            return calculateScore(doc, queryWords, filteredFields, this.schema, this.#levenshteinDistance.bind(this));
+        } else {
+            return calculateScore(doc, queryWords, this.fields, this.schema, this.#levenshteinDistance.bind(this));
+        }
     }
 
     #sanitizeText(text) {

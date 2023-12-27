@@ -4,123 +4,53 @@ const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
 const searchBar = document.getElementById('searchBar');
 
+const TextbooksURL = 'https://raw.githubusercontent.com/benoitvallon/100-best-books/master/books.json';
+const BooksUrl = './books.json';
+
+// const vultos = new Vultos({
+//     schema: {
+//         author: 'string',
+//         country: 'string',
+//         imageLink: 'string',
+//         language: 'string',
+//         link: 'string',
+//         pages: 'number',
+//         title: 'string',
+//         year: 'number'
+//     }
+// });
+
 const vultos = new Vultos({
     schema: {
         title: 'string',
         author: 'string',
+        genre: 'string',
+        published: 'number',
         keywords: 'string',
-        isNew: 'boolean',
-        year: 'number'
+        description: 'string'
     }
 });
 
 init();
 
-function init() {
-    vultos.addDocs([{
-        "title": "1984",
-        "author": "George Orwell",
-        "keywords": "totalitarianism, surveillance, thoughtcrime, doublethink, newspeak, propaganda, rebellion, memory manipulation, oppression, control",
-        "isNew": true,
-        "year": 1949
-    },
-    {
-        "title": "The Iliad",
-        "author": "Homer",
-        "keywords": "war, honor, wrath, battle, heroism, fate, mortality, gods, conflict, glory",
-        "isNew": false,
-        "year": -762
-    },
-    {
-        "title": "Jane Eyre",
-        "author": "Charlotte Bronte",
-        "keywords": "gothic, love, romance, morality, independence, passion, mystery, redemption, social class, orphan",
-        "isNew": false,
-        "year": 1847
-    },
-    {
-        "title": "Dracula",
-        "author": "Bram Stoker",
-        "keywords": "vampire, gothic, horror, transylvania, blood, castle, seduction, fear, undeath, night",
-        "isNew": false,
-        "year": 1897
-    },
-    {
-        "title": "Treasure Island",
-        "author": "Robert Louis Stevenson",
-        "keywords": "adventure, pirates, treasure map, island, ship, mutiny, sea, buried gold, parrot, buccaneers",
-        "isNew": false,
-        "year": 1883
-    },
-    {
-        "title": "A Christmas Carol",
-        "author": "Charles Dickens",
-        "keywords": "redemption, ghosts, christmas, victorian, morality, past present and future, regret, generosity, transformation, festivity",
-        "isNew": false,
-        "year": 1843
-    },
-    {
-        "title": "A Tale of Two Cities",
-        "author": "Charles Dickens",
-        "keywords": "revolution, sacrifice, resurrection, dualities, injustice, guillotine, nobility, poverty, fate, love",
-        "isNew": false,
-        "year": 1859
-    },
-    {
-        "title": "Tarzan of the Apes",
-        "author": "Edgar Rice Burroughs",
-        "keywords": "jungle, wilderness, adventure, civilization vs nature, survival, identity, man vs beast, discovery, adaptation, isolation",
-        "isNew": true,
-        "year": 1912
-    },
-    {
-        "title": "The Great Gatsby",
-        "author": "F. Scott Fitzgerald",
-        "keywords": "american dream, jazz age, decadence, obsession, wealth, parties, long island, illusion vs reality, moral decay, unrequited love",
-        "isNew": true,
-        "year": 1925
-    },
-    {
-        "title": "The Odyssey",
-        "author": "Homer",
-        "keywords": "journey, heroism, adventure, gods, monsters, homecoming, loyalty, cunning, sea, fate",
-        "isNew": false,
-        "year": -800
-    },
-    {
-        "title": "Pride and Prejudice",
-        "author": "Jane Austen",
-        "keywords": "marriage, society, class, manners, courtship, prejudice, women, family, love, irony",
-        "isNew": false,
-        "year": 1813
-    },
-    {
-        "title": "The Picture of Dorian Gray",
-        "author": "Oscar Wilde",
-        "keywords": "aesthetics, morality, hedonism, beauty, youth, corruption, art, duality, vanity, supernatural",
-        "isNew": false,
-        "year": 1890
-    }]);
-
-    // vultos.removeDocs({
-    //     where: {
-    //         keywords: { inc: "youth" },
-    //         year: { lt: 1900 }
-    //     }
-    // });
-
-    const searchResults = vultos.search("the great", {
-        fields: {
-            title: { weight: 1 },
-            author: { weight: 1 }
-        }, where: {
-            year: { eq: 1925 },
-            keywords: { inc: "" }
+async function init() {
+    try {
+        const response = await fetch(BooksUrl);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
-    });
+        const docs = await response.json();
 
-    searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
+        vultos.addDocs(docs);
+    } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+    }
 
+    updateDisplay();
+    search("the great");
+}
+
+function updateDisplay() {
     originalDocsOutput.textContent = JSON.stringify(vultos.docs, null, 2);
 }
 
@@ -128,22 +58,16 @@ searchBar.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const searchQuery = searchBar.value;
 
-        // vultos.removeDocs({
-        //     where: {
-        //         keywords: { inc: "youth" },
-        //         year: { lt: 1900 }
-        //     }
-        // });
-
-        const searchResults = vultos.search(searchQuery, {
-            fields: {
-                title: { weight: 1 },
-                author: { weight: 1 }
-            }, where: {
-                year: { lt: 2000 },
-                keywords: { inc: "" }
-            }
-        });
-        searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
+        search(searchQuery);
     }
 });
+
+function search(searchQuery) {
+    const searchResults = vultos.search(searchQuery, {
+        fields: {
+            title: { weight: 5 }
+        }
+    });
+
+    searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);
+}
