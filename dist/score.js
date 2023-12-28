@@ -2,70 +2,58 @@ import * as textUtils from './textUtils.js';
 import { stopWords } from './lists.js';
 
 const LEVENSHTEIN_DISTANCE = 3;
+const stopWordsSet = new Set(stopWords);
 
 export default function calculateScore(doc, queryWords, fields, schema, levenshteinDistance, ignoreFields) {
+    let totalWeight = 0;
     let totalScore = 0;
-    let totalMaxPossibleScore = 0;
 
-    const processedQueryWords = queryWords.map(word => textUtils.stemmer(textUtils.sanitizeText(word)));
-    const stopwordsSet = new Set(stopWords);
+    const processedQuery = queryWords
+        .map(word => textUtils.stemmer(textUtils.sanitizeText(word)))
+        .filter(word => !stopWordsSet.has(word))
+        .join(' ');
 
     for (const field of fields) {
         if (ignoreFields && ignoreFields.includes(field.name)) {
             continue;
         }
 
-        if (doc[field.name] !== undefined && schema[field.name] === 'string') {
-            const fieldType = schema[field.name];
-            const fieldContent = doc[field.name];
-            const fieldWeight = field.weight || 1;
+        const fieldWeight = field.weight || 1;
+        totalWeight += fieldWeight;
+
+        if (doc[field.name] !== undefined) {
             let fieldScore = 0;
-            let fieldMaxPossibleScore = fieldWeight * 5;
 
-            if (fieldType === 'string') {
-                const sanitizedFieldContent = textUtils.sanitizeText(fieldContent);
-                const fieldContentWords = sanitizedFieldContent.split(/\s+/).map(word => textUtils.stemmer(word));
-                const fieldContentSet = new Set(fieldContentWords.filter(word => !stopwordsSet.has(word)));
-
-                if (processedQueryWords.length > 1) {
-                    fieldScore += calculatePhraseScore(sanitizedFieldContent, processedQueryWords, fieldWeight, levenshteinDistance);
-                }
-                fieldScore += calculateWordScore(fieldContentSet, processedQueryWords, fieldWeight, levenshteinDistance);
-            } else if (fieldType === 'number') {
-                fieldScore += calculateNumberScore(fieldContent, processedQueryWords, fieldWeight);
-            } else if (fieldType === 'boolean') {
-                fieldScore += calculateBooleanScore(fieldContent, processedQueryWords, fieldWeight);
+            if (schema[field.name] === 'string') {
+                fieldScore = calculatePhraseScore(doc[field.name], processedQuery, levenshteinDistance);
+            } else if (schema[field.name] === 'number') {
+                fieldScore = calculateNumberScore(doc[field.name], processedQuery.split(/\s+/));
             }
 
-            totalScore += (fieldMaxPossibleScore > 0) ? (fieldScore / fieldMaxPossibleScore) * fieldWeight * 5 : 0;
-            totalMaxPossibleScore += fieldMaxPossibleScore;
+            totalScore += Math.min(fieldScore, 1) * fieldWeight;
         }
     }
 
-    return totalMaxPossibleScore > 0 ? Math.min(totalScore / totalMaxPossibleScore, 1) : 0;
+    return totalWeight > 0 ? totalScore / totalWeight : 0;
 }
 
-function calculatePhraseScore(fieldContent, queryWords, fieldWeight, levenshteinDistance) {
-    let score = 0;
-    const fullQuery = textUtils.sanitizeText(queryWords.join(' '));
+function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
+    const sanitizedFieldContent = textUtils.sanitizeText(fieldContent)
+        .split(/\s+/)
+        .map(word => textUtils.stemmer(word))
+        .filter(word => !stopWordsSet.has(word))
+        .join(' ');
 
-    for (let i = 0; i <= fieldContent.length - fullQuery.length;) {
-        const substring = fieldContent.substring(i, i + fullQuery.length);
-        const distance = levenshteinDistance(fullQuery, substring);
-        if (distance < LEVENSHTEIN_DISTANCE) {
-            score += fieldWeight * 5 / (distance + 1);
-            i += fullQuery.length;
-        } else {
-            i++;
-        }
+    if (sanitizedFieldContent === processedQuery) {
+        return 1;
+    } else {
+        const fieldContentWords = new Set(sanitizedFieldContent.split(/\s+/));
+        const queryWords = processedQuery.split(/\s+/);
+        return calculateWordScore(fieldContentWords, queryWords, levenshteinDistance);
     }
-
-    return score;
 }
 
-function calculateWordScore(fieldContent, queryWords, fieldWeight, levenshteinDistance) {
-    let score = 0;
-    const totalFieldWords = fieldContent.size;
+function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
     let matchedWords = 0;
 
     for (const word of queryWords) {
@@ -73,47 +61,25 @@ function calculateWordScore(fieldContent, queryWords, fieldWeight, levenshteinDi
             matchedWords++;
         } else {
             for (const fieldWord of fieldContent) {
-                const distance = levenshteinDistance(word, fieldWord);
-                if (distance < LEVENSHTEIN_DISTANCE) {
-                    matchedWords++;
-                    break;
+                if (Math.abs(word.length - fieldWord.length) <= LEVENSHTEIN_DISTANCE) {
+                    const distance = levenshteinDistance(word, fieldWord);
+                    if (distance <= LEVENSHTEIN_DISTANCE) {
+                        matchedWords++;
+                        break;
+                    }
                 }
             }
         }
     }
 
-    if (totalFieldWords > 0) {
-        const matchProportion = matchedWords / totalFieldWords;
-        score = fieldWeight * 5 * matchProportion;
-    }
-
-    return score;
+    return queryWords.length > 0 ? matchedWords / queryWords.length : 0;
 }
 
-
-function calculateNumberScore(fieldContent, queryWords, fieldWeight) {
-    let score = 0;
-    queryWords.forEach(queryWord => {
+function calculateNumberScore(fieldContent, queryWords) {
+    for (const queryWord of queryWords) {
         if (!isNaN(queryWord) && Number(queryWord) === fieldContent) {
-            score += fieldWeight;
+            return 1;
         }
-    });
-    return score;
-}
-
-function calculateBooleanScore(fieldContent, queryWords, fieldWeight) {
-    let score = 0;
-    const booleanQueryWords = queryWords.map(word => {
-        if (word === 'true') return true;
-        if (word === 'false') return false;
-        return null;
-    });
-
-    booleanQueryWords.forEach(queryWord => {
-        if (queryWord !== null && queryWord === fieldContent) {
-            score += fieldWeight;
-        }
-    });
-
-    return score;
+    }
+    return 0;
 }

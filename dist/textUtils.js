@@ -1,23 +1,29 @@
 import * as lists from './lists.js';
 
+const reEdIngLy = /(ed|edly|ing|ingly)$/;
+const reAtBlIz = /(at|bl|iz)$/;
+const reDoubleConsonant = /([^aeiouylsz])\1$/;
+const reCvc = /[^aeiou][aeiouy][^aeiouwxy]$/;
+const reEedEedly = /(eed|eedly)$/;
+const reSsesIes = /(sses|ies)$/;
+const reSingularS = /([^s])s$/;
+const reEndY = /(y|Y)$/;
+
+const regexDashUnderscore = /[-_]/g;
+const regexNonWordSpace = /[^\w\s]/gi;
+
 function sanitizeText(text) {
     if (typeof text === 'string') {
-        return text.toLowerCase().replace(/[^\w\s]/gi, '');
+        return text.toLowerCase().replace(regexDashUnderscore, ' ').replace(regexNonWordSpace, '');
     }
     return text;
 }
 
 function stemmer(word) {
-    const reEdIngLy = /(ed|edly|ing|ingly)$/;
-    const reAtBlIz = /(at|bl|iz)$/;
-    const reDoubleConsonant = /([^aeiouylsz])\1$/;
-    const reCvc = /[^aeiou][aeiouy][^aeiouwxy]$/;
+    word = word.replace(reSsesIes, "ss").replace(reSingularS, "$1");
 
-    word = word.replace(/(sses|ies)$/, "ss");
-    word = word.replace(/([^s])s$/, "$1");
-
-    if (/(eed|eedly)$/.test(word)) {
-        word = word.replace(/(eed|eedly)$/, "ee");
+    if (reEedEedly.test(word)) {
+        word = word.replace(reEedEedly, "ee");
     } else if (reEdIngLy.test(word)) {
         const base = word.replace(reEdIngLy, "");
         if (reAtBlIz.test(base)) {
@@ -31,51 +37,42 @@ function stemmer(word) {
         }
     }
 
-    word = word.replace(/(y|Y)$/, "i");
+    word = word.replace(reEndY, "i");
 
     const step2and3list = lists.list_2_3;
     const step4list = lists.list_4;
 
     for (let [suffix, replacement] of Object.entries(step2and3list)) {
         if (word.endsWith(suffix)) {
-            word = word.replace(new RegExp(suffix + "$"), replacement);
-            return word;
+            return word.replace(new RegExp(suffix + "$"), replacement);
         }
     }
 
     for (let suffix of step4list) {
         if (word.endsWith(suffix)) {
-            word = word.replace(new RegExp(suffix + "$"), "");
-            return word;
+            return word.replace(new RegExp(suffix + "$"), "");
         }
     }
 
-    word = word.replace(/e$/, "");
-    word = word.replace(/(ll)$/, "l");
-
-    return word;
+    return word.replace(/e$/, "").replace(/(ll)$/, "l");
 }
 
 function levenshteinDistance(a, b) {
-    const matrix = [];
+    const currentRow = Array(b.length + 1);
     for (let i = 0; i <= b.length; i++) {
-        matrix[i] = [i];
+        currentRow[i] = i;
     }
-    for (let j = 0; j <= a.length; j++) {
-        matrix[0][j] = j;
-    }
-    for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-            if (b.charAt(i - 1) === a.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
-            }
+
+    for (let i = 1; i <= a.length; i++) {
+        const previousRow = currentRow.slice();
+        currentRow[0] = i;
+        for (let j = 1; j <= b.length; j++) {
+            const cost = (a[i - 1] === b[j - 1]) ? 0 : 1;
+            currentRow[j] = Math.min(previousRow[j] + 1, currentRow[j - 1] + 1, previousRow[j - 1] + cost);
         }
     }
 
-    const result = matrix[b.length][a.length];
-    return result;
+    return currentRow[b.length];
 }
 
 export { sanitizeText, stemmer, levenshteinDistance };

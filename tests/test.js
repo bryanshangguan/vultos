@@ -4,23 +4,23 @@ const originalDocsOutput = document.getElementById('originalDocs');
 const searchResultsOutput = document.getElementById('searchResults');
 const searchBar = document.getElementById('searchBar');
 
-const TextbooksURL = 'https://raw.githubusercontent.com/benoitvallon/100-best-books/master/books.json';
-const BooksUrl = './books.json';
+const textbookURL = 'https://raw.githubusercontent.com/benoitvallon/100-best-books/master/books.json';
+const bookUrl = './books.json';
 
-// const vultos = new Vultos({
-//     schema: {
-//         author: 'string',
-//         country: 'string',
-//         imageLink: 'string',
-//         language: 'string',
-//         link: 'string',
-//         pages: 'number',
-//         title: 'string',
-//         year: 'number'
-//     }
-// });
+const textbookSchema = {
+    schema: {
+        author: 'string',
+        country: 'string',
+        imageLink: 'string',
+        language: 'string',
+        link: 'string',
+        pages: 'number',
+        title: 'string',
+        year: 'number'
+    }
+};
 
-const vultos = new Vultos({
+const bookSchema = {
     schema: {
         title: 'string',
         author: 'string',
@@ -29,13 +29,16 @@ const vultos = new Vultos({
         keywords: 'string',
         description: 'string'
     }
-});
+};
+
+const vultos = new Vultos(bookSchema);
+const query = "the great gatsby";
 
 init();
 
 async function init() {
     try {
-        const response = await fetch(BooksUrl);
+        const response = await fetch(bookUrl);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -47,7 +50,8 @@ async function init() {
     }
 
     updateDisplay();
-    search("the great");
+    search(query);
+    searchBar.value = query;
 }
 
 function updateDisplay() {
@@ -66,7 +70,7 @@ function search(searchQuery) {
     const searchResults = vultos.search(searchQuery, {
         fields: {
             title: { weight: 5 }
-        }
+        }, score: { gt: 0.1 }
     });
 
     searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);

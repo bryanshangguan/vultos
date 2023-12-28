@@ -13,8 +13,12 @@ export default class Vultos {
         }
         this.schema = config.schema;
         this.index = new Map();
+
         this.cache = new Map();
         this.levenshteinCache = new Map();
+        this.sanitizeTextCache = new Map();
+        this.stemmerCache = new Map();
+
         this.docs = [];
         this.fields = [];
 
@@ -87,70 +91,82 @@ export default class Vultos {
         const startTime = performance.now();
         this.#handleParameters(parameters);
 
-        try {
-            const cacheKey = this.#createCacheKey(query, parameters);
-            if (this.cache.has(cacheKey)) {
-                const cachedResults = this.cache.get(cacheKey);
-                return {
-                    elapsed: performance.now() - startTime,
-                    count: cachedResults.length,
-                    hits: this.filterHitsByScore(cachedResults, parameters.score)
-                };
-            }
-
-            const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
-            let relevantDocs = new Set();
-
-            queryWords.forEach(queryWord => {
-                this.index.forEach((docsSet, indexedWord) => {
-                    const distance = this.#levenshteinDistance(queryWord, indexedWord);
-                    if (distance < LEVENSHTEIN_DISTANCE) {
-                        docsSet.forEach(doc => relevantDocs.add(doc));
-                    }
-                });
-            });
-
-            let filteredDocs = Array.from(relevantDocs);
-
-            if (parameters && parameters.where) {
-                filteredDocs = this.#applyWhereClause(filteredDocs, parameters.where);
-            }
-
-            let scoredDocs = filteredDocs.map(doc => {
-                let score = this.#calculateScore(doc, queryWords, parameters.ignore || []);
-                return { doc, score };
-            });
-
-            scoredDocs = scoredDocs.filter(item => item.score > 0)
-                .sort((a, b) => b.score - a.score);
-
-            let uniqueDocs = new Set();
-
-            let hits = [];
-
-            for (const item of scoredDocs) {
-                const docStr = JSON.stringify(item.doc);
-                if (!uniqueDocs.has(docStr)) {
-                    uniqueDocs.add(docStr);
-                    hits.push({ score: item.score, document: item.doc });
-                }
-            }
-
-            this.cache.set(cacheKey, hits);
-
-            hits = this.filterHitsByScore(hits, parameters.score);
-
-            const endTime = performance.now();
-
-            return {
-                elapsed: endTime - startTime,
-                count: hits.length,
-                hits: hits,
-                sortBy: (fieldName) => this.#sortByField(hits, fieldName)
-            };
-        } catch (error) {
-            throw new Error(error.message);
+        const cacheKey = this.#createCacheKey(query, parameters);
+        if (this.cache.has(cacheKey)) {
+            const cachedResults = this.cache.get(cacheKey);
+            return this.#formatSearchResults(cachedResults, parameters, startTime);
         }
+
+        const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
+        let relevantDocs = this.#findRelevantDocs(queryWords);
+
+        let filteredDocs = this.#filterDocs(relevantDocs, parameters.where);
+        let scoredDocs = this.#scoreAndSortDocs(filteredDocs, queryWords, parameters.ignore);
+
+        let hits = this.#uniqueDocuments(scoredDocs);
+        this.cache.set(cacheKey, hits);
+
+        return this.#formatSearchResults(hits, parameters, startTime);
+    }
+
+    #findRelevantDocs(queryWords) {
+        let relevantDocs = new Set();
+        queryWords.forEach(queryWord => {
+            this.index.forEach((docsSet, indexedWord) => {
+                if (this.#isWordRelevant(queryWord, indexedWord)) {
+                    docsSet.forEach(doc => relevantDocs.add(doc));
+                }
+            });
+        });
+        return relevantDocs;
+    }
+
+    #isWordRelevant(queryWord, indexedWord) {
+        if (Math.abs(queryWord.length - indexedWord.length) >= LEVENSHTEIN_DISTANCE) return false;
+        const distance = this.#levenshteinDistance(queryWord, indexedWord);
+        return distance < LEVENSHTEIN_DISTANCE;
+    }
+
+    #filterDocs(docs, whereClause) {
+        if (!whereClause) return Array.from(docs);
+        return this.#applyWhereClause(Array.from(docs), whereClause);
+    }
+
+    #scoreAndSortDocs(docs, queryWords, ignoreFields) {
+        if (!Array.isArray(docs)) {
+            console.error('Expected an array of documents for scoring and sorting');
+            return [];
+        }
+        return docs.map(doc => ({
+            doc,
+            score: this.#calculateScore(doc, queryWords, ignoreFields)
+        }))
+            .filter(item => item.score > 0)
+            .sort((a, b) => b.score - a.score);
+    }
+
+    #uniqueDocuments(scoredDocs) {
+        let uniqueDocs = new Set();
+        let hits = [];
+        scoredDocs.forEach(item => {
+            const docStr = JSON.stringify(item.doc);
+            if (!uniqueDocs.has(docStr)) {
+                uniqueDocs.add(docStr);
+                hits.push({ score: item.score, document: item.doc });
+            }
+        });
+        return hits;
+    }
+
+    #formatSearchResults(hits, parameters, startTime) {
+        hits = this.#filterHitsByScore(hits, parameters.score);
+        const endTime = performance.now();
+        return {
+            elapsed: endTime - startTime,
+            count: hits.length,
+            hits: hits,
+            sortBy: (fieldName) => this.#sortByField(hits, fieldName)
+        };
     }
 
     #sortByField(results, fieldName) {
@@ -321,7 +337,7 @@ export default class Vultos {
         });
     }
 
-    filterHitsByScore(hits, scoreConditions) {
+    #filterHitsByScore(hits, scoreConditions) {
         if (!scoreConditions) return hits;
 
         const validScoreKeys = ['gt', 'lt', 'eq'];
@@ -388,11 +404,21 @@ export default class Vultos {
     }
 
     #sanitizeText(text) {
-        return textUtils.sanitizeText(text);
+        if (this.sanitizeTextCache.has(text)) {
+            return this.sanitizeTextCache.get(text);
+        }
+        const sanitizedText = textUtils.sanitizeText(text);
+        this.sanitizeTextCache.set(text, sanitizedText);
+        return sanitizedText;
     }
 
     #stemmer(word) {
-        return textUtils.stemmer(word);
+        if (this.stemmerCache.has(word)) {
+            return this.stemmerCache.get(word);
+        }
+        const stemmedWord = textUtils.stemmer(word);
+        this.stemmerCache.set(word, stemmedWord);
+        return stemmedWord;
     }
 
     #levenshteinDistance(a, b) {
