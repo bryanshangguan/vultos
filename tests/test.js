@@ -31,14 +31,14 @@ const bookSchema = {
     }
 };
 
-const vultos = new Vultos(bookSchema);
-const query = "the great gatsby";
+const vultos = new Vultos(textbookSchema);
+const query = "Fairy tales";
 
 init();
 
 async function init() {
     try {
-        const response = await fetch(bookUrl);
+        const response = await fetch(textbookURL);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }

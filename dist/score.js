@@ -8,10 +8,7 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
     let totalWeight = 0;
     let totalScore = 0;
 
-    const processedQuery = queryWords
-        .map(word => textUtils.stemmer(textUtils.sanitizeText(word)))
-        .filter(word => !stopWordsSet.has(word))
-        .join(' ');
+    const processedQuery = queryWords.join(' ');
 
     for (const field of fields) {
         if (ignoreFields && ignoreFields.includes(field.name)) {
@@ -23,31 +20,34 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
 
         if (doc[field.name] !== undefined) {
             let fieldScore = 0;
+            const processedFieldContent = processText(doc[field.name].toString());
 
             if (schema[field.name] === 'string') {
-                fieldScore = calculatePhraseScore(doc[field.name], processedQuery, levenshteinDistance);
+                fieldScore = calculatePhraseScore(processedFieldContent, processedQuery, levenshteinDistance);
             } else if (schema[field.name] === 'number') {
-                fieldScore = calculateNumberScore(doc[field.name], processedQuery.split(/\s+/));
+                fieldScore = calculateNumberScore(processedFieldContent, processedQuery.split(/\s+/));
             }
 
-            totalScore += Math.min(fieldScore, 1) * fieldWeight;
+            totalScore += fieldScore * fieldWeight;
         }
     }
 
     return totalWeight > 0 ? totalScore / totalWeight : 0;
 }
 
-function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
-    const sanitizedFieldContent = textUtils.sanitizeText(fieldContent)
+function processText(text) {
+    return textUtils.sanitizeText(text)
         .split(/\s+/)
         .map(word => textUtils.stemmer(word))
         .filter(word => !stopWordsSet.has(word))
         .join(' ');
+}
 
-    if (sanitizedFieldContent === processedQuery) {
+function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
+    if (fieldContent === processedQuery) {
         return 1;
     } else {
-        const fieldContentWords = new Set(sanitizedFieldContent.split(/\s+/));
+        const fieldContentWords = new Set(fieldContent.split(/\s+/));
         const queryWords = processedQuery.split(/\s+/);
         return calculateWordScore(fieldContentWords, queryWords, levenshteinDistance);
     }
@@ -63,7 +63,7 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
             for (const fieldWord of fieldContent) {
                 if (Math.abs(word.length - fieldWord.length) <= LEVENSHTEIN_DISTANCE) {
                     const distance = levenshteinDistance(word, fieldWord);
-                    if (distance <= LEVENSHTEIN_DISTANCE) {
+                    if (distance < LEVENSHTEIN_DISTANCE) {
                         matchedWords++;
                         break;
                     }
@@ -72,7 +72,7 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
         }
     }
 
-    return queryWords.length > 0 ? matchedWords / queryWords.length : 0;
+    return queryWords.length > 0 ? matchedWords / fieldContent.size : 0;
 }
 
 function calculateNumberScore(fieldContent, queryWords) {
