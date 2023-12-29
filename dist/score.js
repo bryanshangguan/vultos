@@ -8,7 +8,7 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
     let totalWeight = 0;
     let totalScore = 0;
 
-    const processedQuery = queryWords.join(' ');
+    const processedQuery = processText(queryWords);
 
     for (const field of fields) {
         if (ignoreFields && ignoreFields.includes(field.name)) {
@@ -44,6 +44,7 @@ function processText(text) {
 }
 
 function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
+    console.log(fieldContent);
     if (fieldContent === processedQuery) {
         return 1;
     } else {
@@ -61,7 +62,7 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
             matchedWords++;
         } else {
             for (const fieldWord of fieldContent) {
-                if (Math.abs(word.length - fieldWord.length) <= LEVENSHTEIN_DISTANCE) {
+                if (Math.abs(word.length - fieldWord.length) < LEVENSHTEIN_DISTANCE) {
                     const distance = levenshteinDistance(word, fieldWord);
                     if (distance < LEVENSHTEIN_DISTANCE) {
                         matchedWords++;
@@ -70,6 +71,11 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
                 }
             }
         }
+    }
+
+    console.log("matches:", matchedWords);
+    if (matchedWords > 0) {
+        console.log(fieldContent);
     }
 
     return queryWords.length > 0 ? matchedWords / fieldContent.size : 0;

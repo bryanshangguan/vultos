@@ -32,7 +32,7 @@ const bookSchema = {
 };
 
 const vultos = new Vultos(textbookSchema);
-const query = "Fairy tales";
+const query = "tales";
 
 init();
 
@@ -70,7 +70,7 @@ function search(searchQuery) {
     const searchResults = vultos.search(searchQuery, {
         fields: {
             title: { weight: 5 }
-        }, score: { gt: 0.1 }
+        }
     });
 
     searchResultsOutput.textContent = JSON.stringify(searchResults, null, 2);

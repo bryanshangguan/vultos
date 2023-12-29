@@ -24,7 +24,7 @@ const list_4 = [
     "ances", "ences", "ists", "isms", "nesses", "ities", "ives", "izes", "ous"
 ];
 
-const stopWords = ['the', 'a', 'and', 'of', 'in', 'to', 'is', 'you',
+const stopWords = new Set(['the', 'a', 'and', 'of', 'in', 'to', 'is', 'you',
     'that', 'it', 'he', 'was', 'for', 'on', 'are', 'as', 'with', 'his',
     'they', 'at', 'be', 'this', 'from', 'I', 'have', 'or', 'by', 'one',
     'had', 'not', 'but', 'what', 'all', 'were', 'we', 'when', 'your',
@@ -34,6 +34,6 @@ const stopWords = ['the', 'a', 'and', 'of', 'in', 'to', 'is', 'you',
     'him', 'into', 'time', 'has', 'look', 'two', 'more', 'write', 'go',
     'see', 'number', 'no', 'way', 'could', 'people', 'my', 'than',
     'first', 'water', 'been', 'call', 'who', 'oil', 'its', 'now', 'find',
-    'long', 'down', 'day', 'did', 'get', 'come', 'made', 'may', 'part'];
+    'long', 'down', 'day', 'did', 'get', 'come', 'made', 'may', 'part']);
 
 export { list_2_3, list_4, stopWords }
