@@ -44,7 +44,6 @@ function processText(text) {
 }
 
 function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
-    console.log(fieldContent);
     if (fieldContent === processedQuery) {
         return 1;
     } else {
@@ -71,11 +70,6 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
                 }
             }
         }
-    }
-
-    console.log("matches:", matchedWords);
-    if (matchedWords > 0) {
-        console.log(fieldContent);
     }
 
     return queryWords.length > 0 ? matchedWords / fieldContent.size : 0;

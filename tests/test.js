@@ -32,7 +32,7 @@ const bookSchema = {
 };
 
 const vultos = new Vultos(textbookSchema);
-const query = "tales";
+const query = "the epic of gilgamesh";
 
 init();
 

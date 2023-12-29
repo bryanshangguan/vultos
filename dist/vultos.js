@@ -1,6 +1,7 @@
 import Field from './field.js';
 import calculateScore from './score.js';
 import * as textUtils from './textUtils.js';
+import { stopWords } from './lists.js';
 
 const BATCH_SIZE = 100;
 const LEVENSHTEIN_DISTANCE = 2;
@@ -89,48 +90,46 @@ export default class Vultos {
 
     search(query, parameters = {}) {
         const startTime = performance.now();
-
-        console.time("parameters");
         this.#handleParameters(parameters);
-        console.timeLog("parameters");
 
-        console.time("caching");
         const cacheKey = this.#createCacheKey(query, parameters);
         if (this.cache.has(cacheKey)) {
             const cachedResults = this.cache.get(cacheKey);
             return this.#formatSearchResults(cachedResults, parameters, startTime);
         }
-        console.timeLog("caching");
 
-        console.time("relevantDocs");
         const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
         let relevantDocs = this.#findRelevantDocs(queryWords);
-        console.timeLog("relevantDocs");
 
-        console.time("filtering");
         let filteredDocs = this.#filterDocs(relevantDocs, parameters.where);
-        console.timeLog("filtering");
-        console.time("score");
         let scoredDocs = this.#scoreAndSortDocs(filteredDocs, query, parameters.ignore);
-        console.timeLog("score");
 
-        console.time("unique");
         let hits = this.#uniqueDocuments(scoredDocs);
         this.cache.set(cacheKey, hits);
-        console.timeLog("unique");
 
         return this.#formatSearchResults(hits, parameters, startTime);
     }
 
     #findRelevantDocs(queryWords) {
         let relevantDocs = new Set();
-        queryWords.forEach(queryWord => {
-            this.index.forEach((docsSet, indexedWord) => {
-                if (this.#isWordRelevant(queryWord, indexedWord)) {
-                    docsSet.forEach(doc => relevantDocs.add(doc));
+        const processedQueryWords = queryWords.filter(qw => !stopWords.has(qw));
+
+        for (const queryWord of processedQueryWords) {
+            if (this.index.has(queryWord)) {
+                for (const doc of this.index.get(queryWord)) {
+                    relevantDocs.add(doc);
                 }
-            });
-        });
+            }
+
+            for (const [indexedWord, docsSet] of this.index.entries()) {
+                if (this.#isWordRelevant(queryWord, indexedWord)) {
+                    for (const doc of docsSet) {
+                        relevantDocs.add(doc);
+                    }
+                }
+            }
+        }
+
         return relevantDocs;
     }
 
@@ -223,10 +222,12 @@ export default class Vultos {
                 const terms = this.#sanitizeText(doc[field.name]).split(/\s+/);
                 terms.forEach(term => {
                     const stemmedTerm = this.#stemmer(term);
-                    if (!this.index.has(stemmedTerm)) {
+                    if (!stopWords.has(stemmedTerm) && !this.index.has(stemmedTerm)) {
                         this.index.set(stemmedTerm, new Set());
                     }
-                    this.index.get(stemmedTerm).add(doc);
+                    if (!stopWords.has(stemmedTerm)) {
+                        this.index.get(stemmedTerm).add(doc);
+                    }
                 });
             }
         }
