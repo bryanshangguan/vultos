@@ -3,7 +3,7 @@ import calculateScore from './score.js';
 import * as textUtils from './textUtils.js';
 
 const BATCH_SIZE = 100;
-const LEVENSHTEIN_DISTANCE = 3;
+const LEVENSHTEIN_DISTANCE = 2;
 
 export default class Vultos {
     constructor(config) {
@@ -89,22 +89,35 @@ export default class Vultos {
 
     search(query, parameters = {}) {
         const startTime = performance.now();
-        this.#handleParameters(parameters);
 
+        console.time("parameters");
+        this.#handleParameters(parameters);
+        console.timeLog("parameters");
+
+        console.time("caching");
         const cacheKey = this.#createCacheKey(query, parameters);
         if (this.cache.has(cacheKey)) {
             const cachedResults = this.cache.get(cacheKey);
             return this.#formatSearchResults(cachedResults, parameters, startTime);
         }
+        console.timeLog("caching");
 
+        console.time("relevantDocs");
         const queryWords = query.toLowerCase().split(/\s+/).map(word => this.#stemmer(this.#sanitizeText(word)));
         let relevantDocs = this.#findRelevantDocs(queryWords);
+        console.timeLog("relevantDocs");
 
+        console.time("filtering");
         let filteredDocs = this.#filterDocs(relevantDocs, parameters.where);
-        let scoredDocs = this.#scoreAndSortDocs(filteredDocs, queryWords, parameters.ignore);
+        console.timeLog("filtering");
+        console.time("score");
+        let scoredDocs = this.#scoreAndSortDocs(filteredDocs, query, parameters.ignore);
+        console.timeLog("score");
 
+        console.time("unique");
         let hits = this.#uniqueDocuments(scoredDocs);
         this.cache.set(cacheKey, hits);
+        console.timeLog("unique");
 
         return this.#formatSearchResults(hits, parameters, startTime);
     }
@@ -371,6 +384,7 @@ export default class Vultos {
     }
 
     #setParameters(parameters) {
+
         if (parameters && parameters.fields) {
             for (const fieldName in parameters.fields) {
                 if (!this.schema.hasOwnProperty(fieldName)) {
