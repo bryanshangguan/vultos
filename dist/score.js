@@ -1,66 +1,74 @@
 import * as textUtils from './textUtils.js';
 import { stopWords } from './lists.js';
 
-const LEVENSHTEIN_DISTANCE = 3;
+const LEVENSHTEIN_DISTANCE = 2;
 const stopWordsSet = new Set(stopWords);
+const processedWordsCache = new Map();
 
 export default function calculateScore(doc, queryWords, fields, schema, levenshteinDistance, ignoreFields) {
     let totalWeight = 0;
     let totalScore = 0;
 
     const processedQuery = processText(queryWords);
+    const queryWordsArray = processedQuery.split(/\s+/);
 
     for (const field of fields) {
-        if (ignoreFields && ignoreFields.includes(field.name)) {
+        if (ignoreFields && ignoreFields.includes(field.name) || doc[field.name] === undefined) {
             continue;
         }
 
         const fieldWeight = field.weight || 1;
         totalWeight += fieldWeight;
 
-        if (doc[field.name] !== undefined) {
-            let fieldScore = 0;
-            const processedFieldContent = processText(doc[field.name].toString());
+        let fieldScore = 0;
+        const processedFieldContent = processText(doc[field.name].toString());
 
-            if (schema[field.name] === 'string') {
-                fieldScore = calculatePhraseScore(processedFieldContent, processedQuery, levenshteinDistance);
-            } else if (schema[field.name] === 'number') {
-                fieldScore = calculateNumberScore(processedFieldContent, processedQuery.split(/\s+/));
-            }
-
-            totalScore += fieldScore * fieldWeight;
+        if (schema[field.name] === 'string') {
+            fieldScore = calculatePhraseScore(processedFieldContent, processedQuery, queryWordsArray, levenshteinDistance);
+        } else if (schema[field.name] === 'number') {
+            fieldScore = calculateNumberScore(processedFieldContent, queryWordsArray);
         }
+
+        totalScore += fieldScore * fieldWeight;
     }
 
     return totalWeight > 0 ? totalScore / totalWeight : 0;
 }
 
 function processText(text) {
-    return textUtils.sanitizeText(text)
-        .split(/\s+/)
-        .map(word => textUtils.stemmer(word))
-        .filter(word => !stopWordsSet.has(word))
+    return text.split(/\s+/)
+        .map(word => {
+            if (!processedWordsCache.has(word)) {
+                const processed = textUtils.stemmer(textUtils.sanitizeText(word));
+                if (!stopWordsSet.has(processed)) {
+                    processedWordsCache.set(word, processed);
+                } else {
+                    processedWordsCache.set(word, null);
+                }
+            }
+            return processedWordsCache.get(word);
+        })
+        .filter(Boolean)
         .join(' ');
 }
 
-function calculatePhraseScore(fieldContent, processedQuery, levenshteinDistance) {
+function calculatePhraseScore(fieldContent, processedQuery, queryWordsArray, levenshteinDistance) {
     if (fieldContent === processedQuery) {
         return 1;
     } else {
         const fieldContentWords = new Set(fieldContent.split(/\s+/));
-        const queryWords = processedQuery.split(/\s+/);
-        return calculateWordScore(fieldContentWords, queryWords, levenshteinDistance);
+        return calculateWordScore(fieldContentWords, queryWordsArray, levenshteinDistance);
     }
 }
 
-function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
+function calculateWordScore(fieldContentWords, queryWords, levenshteinDistance) {
     let matchedWords = 0;
 
     for (const word of queryWords) {
-        if (fieldContent.has(word)) {
+        if (fieldContentWords.has(word)) {
             matchedWords++;
         } else {
-            for (const fieldWord of fieldContent) {
+            for (const fieldWord of fieldContentWords) {
                 if (Math.abs(word.length - fieldWord.length) < LEVENSHTEIN_DISTANCE) {
                     const distance = levenshteinDistance(word, fieldWord);
                     if (distance < LEVENSHTEIN_DISTANCE) {
@@ -72,7 +80,7 @@ function calculateWordScore(fieldContent, queryWords, levenshteinDistance) {
         }
     }
 
-    return queryWords.length > 0 ? matchedWords / fieldContent.size : 0;
+    return queryWords.length > 0 ? matchedWords / fieldContentWords.size : 0;
 }
 
 function calculateNumberScore(fieldContent, queryWords) {

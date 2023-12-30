@@ -78,8 +78,6 @@ export default class Vultos {
             return;
         }
 
-        console.log("Removing", documentsToRemove.length, "documents");
-
         for (let i = 0; i < documentsToRemove.length; i += BATCH_SIZE) {
             const batch = documentsToRemove.slice(i, i + BATCH_SIZE);
             this.#processRemovalBatch(batch);
