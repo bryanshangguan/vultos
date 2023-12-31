@@ -1,0 +1,36 @@
+/* Dark mode styles (default) */
+body {
+	background-color: #1a202c;
+	color: #fff;
+}
+
+/* Light mode styles */
+body.light-mode {
+	background-color: #fff;
+	color: #000;
+}
+
+.App {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+header,
+footer {
+	background-color: #20232a;
+	color: white;
+	text-align: center;
+	padding: 10px 0;
+}
+
+.main-content {
+	flex-grow: 1;
+	padding: 20px;
+	background-color: #333;
+	color: #ddd;
+}
+
+footer {
+	font-size: 0.8em;
+}
