@@ -13,7 +13,7 @@ export default function calculateScore(doc, queryWords, fields, schema, levensht
     const queryWordsArray = processedQuery.split(/\s+/);
 
     for (const field of fields) {
-        if (ignoreFields && ignoreFields.includes(field.name) || doc[field.name] === undefined) {
+        if ((ignoreFields && ignoreFields.includes(field.name)) || doc[field.name] === undefined) {
             continue;
         }
 

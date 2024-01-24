@@ -4,14 +4,12 @@ const list_2_3 = {
     "eli": "e", "ousli": "ous", "ization": "ize", "ation": "ate",
     "ator": "ate", "alism": "al", "iveness": "ive", "fulness": "ful",
     "ousness": "ous", "aliti": "al", "iviti": "ive", "biliti": "ble",
-    "logi": "log", "icate": "ic", "ative": "", "alize": "al",
-    "iciti": "ic", "ical": "ic", "ful": "", "ness": "",
-    "ability": "able", "ibility": "ible", "ation": "ate", "ization": "ize",
-    "ition": "ite", "ality": "al", "ivity": "ive", "ivity": "ive",
-    "ment": "", "ness": "ness", "ship": "", "sion": "sion", "tion": "tion",
-    "ance": "ance", "ence": "ence", "hood": "", "ism": "ism", "ist": "ist",
-    "ity": "ity", "ment": "ment", "ness": "ness", "ship": "ship",
-    "th": "th", "ese": "ese", "ize": "ize", "ise": "ise"
+    "logi": "log", "icate": "ic", "ative": "", "alize": "al", "iciti": "ic",
+    "ical": "ic", "ful": "", "ness": "", "ability": "able", "ibility": "ible",
+    "ition": "ite", "ality": "al", "ivity": "ive", "ment": "", "ship": "",
+    "sion": "sion", "tion": "tion", "ance": "ance", "ence": "ence", "hood": "",
+    "ism": "ism", "ist": "ist", "ity": "ity", "th": "th", "ese": "ese",
+    "ize": "ize", "ise": "ise"
 };
 
 const list_4 = [
